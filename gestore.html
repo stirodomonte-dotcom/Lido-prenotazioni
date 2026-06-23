@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Lido Gestore">
+<meta name="theme-color" content="#005F92">
+<title>Lido – Pannello Gestore</title>
+<style>
+  :root {
+    --sea: #0077B6; --sea-dark: #005F92; --sand: #F4E0B5;
+    --text: #1A1A2E; --text-light: #5A6A7A;
+    --free: #48CAE4; --booked: #E76F51; --occupied: #B5451B;
+    --family: #7B61FF; --green: #2D9D78;
+    --radius: 10px; --shadow: 0 2px 12px rgba(0,119,182,0.13);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #EBF7FC; color: var(--text); min-height: 100vh; }
+
+  /* PIN */
+  .pin-screen { display: flex; position: fixed; inset: 0; background: var(--sea-dark); z-index: 300; align-items: center; justify-content: center; flex-direction: column; padding: 30px; }
+  .pin-screen.hidden { display: none; }
+  .pin-logo { font-size: 52px; margin-bottom: 16px; }
+  .pin-title { color: white; font-size: 22px; font-weight: 800; margin-bottom: 6px; }
+  .pin-sub { color: rgba(255,255,255,0.7); font-size: 14px; margin-bottom: 28px; text-align: center; }
+  .pin-input { background: rgba(255,255,255,0.15); border: 2px solid rgba(255,255,255,0.35); border-radius: 12px; padding: 14px 20px; font-size: 28px; font-weight: 800; color: white; letter-spacing: 6px; text-align: center; width: 200px; outline: none; margin-bottom: 16px; -webkit-appearance: none; }
+  .pin-btn { background: white; color: var(--sea-dark); border: none; padding: 14px 40px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; }
+  .pin-err { color: #FFD0C8; font-size: 13px; margin-top: 10px; min-height: 18px; }
+
+  /* HEADER */
+  .header { background: var(--sea-dark); color: white; padding: 14px 18px 12px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .header-title { font-size: 17px; font-weight: 700; }
+  .header-sub { font-size: 11px; opacity: 0.7; margin-top: 1px; }
+  .header-dot { width: 8px; height: 8px; border-radius: 50%; background: #48CAE4; display: inline-block; margin-right: 5px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  /* TABS */
+  .tabs { display: flex; background: white; border-bottom: 2px solid #DDE8F0; }
+  .tab { flex: 1; padding: 11px 4px; text-align: center; font-size: 11px; font-weight: 600; color: var(--text-light); cursor: pointer; border-bottom: 3px solid transparent; background: none; border-top: none; border-left: none; border-right: none; }
+  .tab.active { color: var(--sea); border-bottom-color: var(--sea); }
+
+  .screen { display: none; padding: 16px; }
+  .screen.active { display: block; }
+
+  /* DATE BAR */
+  .date-bar { background: white; border-radius: var(--radius); padding: 12px 14px; margin-bottom: 14px; box-shadow: var(--shadow); display: flex; align-items: center; gap: 10px; }
+  .date-bar-label { font-size: 12px; font-weight: 700; color: var(--text-light); white-space: nowrap; }
+  .date-bar input[type="date"] { flex: 1; padding: 9px 12px; border: 1.5px solid #D0DDE8; border-radius: 8px; font-size: 14px; font-weight: 700; color: var(--sea); outline: none; -webkit-appearance: none; background: #F7FAFC; }
+  .date-bar input[type="date"]:focus { border-color: var(--sea); }
+  .date-today-btn { background: var(--sea); color: white; border: none; padding: 9px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
+
+  /* CASSA */
+  .cassa-search { display: flex; gap: 10px; margin-bottom: 14px; }
+  .cassa-search input { flex: 1; padding: 14px 16px; border: 1.5px solid #D0DDE8; border-radius: 12px; font-size: 20px; font-weight: 700; letter-spacing: 4px; text-align: center; color: var(--sea); text-transform: uppercase; outline: none; -webkit-appearance: none; background: white; }
+  .cassa-search input:focus { border-color: var(--sea); }
+  .cassa-search button { background: var(--sea); color: white; border: none; padding: 0 18px; border-radius: 12px; font-size: 13px; font-weight: 700; cursor: pointer; }
+  .result-card { background: white; border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); margin-bottom: 14px; border-left: 5px solid var(--sea); }
+  .result-card.not-found { border-left-color: var(--booked); }
+  .result-card.checked-in { border-left-color: var(--green); }
+  .result-name { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+  .result-row { font-size: 14px; color: var(--text-light); margin-bottom: 4px; }
+  .result-row strong { color: var(--text); }
+  .result-posto { display: inline-block; background: var(--sea); color: white; padding: 6px 14px; border-radius: 20px; font-size: 16px; font-weight: 800; margin-top: 8px; }
+  .result-posto.checked { background: var(--green); }
+  .btn-checkin { display: block; width: 100%; background: var(--green); color: white; border: none; padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 14px; }
+
+  /* LISTA */
+  .section-title { font-size: 14px; font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+  .badge-count { background: var(--sea); color: white; font-size: 11px; padding: 3px 8px; border-radius: 20px; font-weight: 700; }
+  .prenot-card { background: white; border-radius: var(--radius); padding: 13px 15px; margin-bottom: 9px; box-shadow: var(--shadow); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .prenot-card.done { opacity: 0.55; }
+  .prenot-left { flex: 1; min-width: 0; }
+  .prenot-name { font-size: 14px; font-weight: 700; }
+  .prenot-detail { font-size: 12px; color: var(--text-light); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .prenot-codice { font-size: 12px; font-weight: 700; color: var(--sea); font-family: monospace; letter-spacing: 2px; }
+  .tag { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 20px; flex-shrink: 0; }
+  .tag.attesa { background: #FEF3E0; color: #E8871A; }
+  .tag.arrivato { background: #E3F8EF; color: var(--green); }
+
+  /* SUPERVISORE */
+  .sup-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 16px; }
+  .sup-stat { background: white; border-radius: var(--radius); padding: 14px 8px; text-align: center; box-shadow: var(--shadow); }
+  .sup-stat-num { font-size: 30px; font-weight: 800; }
+  .sup-stat-label { font-size: 11px; color: var(--text-light); margin-top: 2px; font-weight: 600; }
+  .sup-stat.liberi .sup-stat-num { color: var(--free); }
+  .sup-stat.prenotati .sup-stat-num { color: var(--booked); }
+  .sup-stat.occupati .sup-stat-num { color: var(--occupied); }
+  .sup-zona-block { margin-bottom: 18px; }
+  .sup-zona-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; padding: 7px 12px; border-radius: 8px; margin-bottom: 10px; display: inline-block; }
+  .sup-zona-title.normale { background: #E0F4FB; color: var(--sea); }
+  .sup-zona-title.family { background: #EDE8FF; color: var(--family); }
+  .sup-grid-wrap { background: white; border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow); overflow-x: auto; }
+  .map-grid { display: inline-flex; flex-direction: column; gap: 6px; min-width: 100%; }
+  .map-row { display: flex; align-items: center; gap: 6px; }
+  .row-label { font-size: 11px; font-weight: 700; color: var(--text-light); width: 22px; text-align: center; flex-shrink: 0; }
+  .sup-omb { width: 46px; height: 54px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+  .sup-omb .omb-icon { font-size: 18px; line-height: 1; }
+  .sup-omb .omb-num { font-size: 9px; margin-top: 1px; font-weight: 700; }
+  .sup-omb .omb-ora { font-size: 8px; margin-top: 1px; opacity: 0.85; }
+  .sup-omb .omb-name { font-size: 8px; margin-top: 1px; max-width: 42px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; }
+  .sup-omb.free { background: var(--free); color: white; }
+  .sup-omb.free-family { background: var(--family); color: white; }
+  .sup-omb.booked { background: var(--booked); color: white; cursor: pointer; }
+  .sup-omb.occupied { background: var(--occupied); color: white; cursor: pointer; }
+  .sup-omb.disabled { background: #D0D8E0; }
+
+  /* STATISTICHE */
+  .stat-card { background: white; border-radius: var(--radius); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .stat-card-title { font-size: 13px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  .stat-big { font-size: 42px; font-weight: 800; color: var(--sea); }
+  .stat-big-label { font-size: 13px; color: var(--text-light); margin-top: 2px; }
+  .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #EEF2F6; }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-row-label { font-size: 14px; color: var(--text); }
+  .stat-row-val { font-size: 16px; font-weight: 800; color: var(--sea); }
+  .stat-bar-wrap { margin-top: 8px; }
+  .stat-bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .stat-bar-label { font-size: 12px; color: var(--text-light); width: 80px; flex-shrink: 0; }
+  .stat-bar { flex: 1; height: 10px; background: #EEF2F6; border-radius: 5px; overflow: hidden; }
+  .stat-bar-fill { height: 100%; border-radius: 5px; transition: width 0.4s; }
+  .stat-bar-val { font-size: 12px; font-weight: 700; width: 24px; text-align: right; }
+
+  /* CONFIG */
+  .admin-section { background: white; border-radius: var(--radius); padding: 16px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .admin-section-title { font-size: 13px; font-weight: 700; color: var(--text-light); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+  .config-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+  .config-row label { font-size: 13px; flex: 1; }
+  .config-row input { padding: 8px 10px; border: 1.5px solid #D0DDE8; border-radius: 8px; font-size: 14px; width: 170px; outline: none; -webkit-appearance: none; }
+  .config-row input:focus { border-color: var(--sea); }
+  .row-config-item { background: #F4F8FC; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .row-config-item label { font-size: 12px; }
+  .row-config-item input { width: 52px; padding: 6px 8px; border: 1.5px solid #D0DDE8; border-radius: 6px; font-size: 13px; outline: none; }
+  .row-config-item select { padding: 6px 6px; border: 1.5px solid #D0DDE8; border-radius: 6px; font-size: 12px; outline: none; -webkit-appearance: none; background: white; }
+  .add-row-btn { background: #EBF7FC; color: var(--sea); border: none; padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 4px; }
+  .remove-row-btn { background: none; border: none; color: var(--booked); font-size: 18px; cursor: pointer; padding: 2px 4px; }
+  .btn-save { width: 100%; background: var(--sea); color: white; border: none; padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .btn-danger { width: 100%; background: #FEE2DC; color: var(--booked); border: none; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+
+  /* TOOLTIP */
+  .tooltip-overlay { display: none; position: fixed; inset: 0; background: rgba(0,30,60,0.5); z-index: 250; align-items: center; justify-content: center; padding: 30px; }
+  .tooltip-overlay.open { display: flex; }
+  .tooltip-box { background: white; border-radius: 16px; padding: 22px 20px; width: 100%; max-width: 340px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+  .tooltip-posto { font-size: 22px; font-weight: 800; color: var(--sea); margin-bottom: 4px; }
+  .tooltip-zona { font-size: 12px; color: var(--text-light); margin-bottom: 12px; }
+  .tooltip-badge { display: inline-block; padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 14px; }
+  .tooltip-badge.prenotato { background: #FEE8E0; color: var(--booked); }
+  .tooltip-badge.occupato { background: #F5DDD8; color: var(--occupied); }
+  .tooltip-row { font-size: 14px; margin-bottom: 7px; line-height: 1.5; }
+  .tooltip-row strong { color: var(--text); }
+  .tooltip-checkin-btn { width: 100%; background: var(--green); color: white; border: none; padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 12px; }
+  .tooltip-close { width: 100%; background: #EBF7FC; color: var(--sea); border: none; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+
+  /* CONFIRM */
+  .confirm-overlay { display: none; position: fixed; inset: 0; background: rgba(0,30,60,0.6); z-index: 400; align-items: center; justify-content: center; padding: 30px; }
+  .confirm-overlay.open { display: flex; }
+  .confirm-box { background: white; border-radius: 18px; padding: 28px 22px; width: 100%; max-width: 340px; text-align: center; }
+  .confirm-icon { font-size: 42px; margin-bottom: 10px; }
+  .confirm-title { font-size: 17px; font-weight: 800; margin-bottom: 8px; }
+  .confirm-sub { font-size: 14px; color: var(--text-light); margin-bottom: 22px; }
+  .confirm-btns { display: flex; gap: 10px; }
+  .confirm-btns button { flex: 1; padding: 13px; border-radius: 12px; font-size: 14px; font-weight: 700; border: none; cursor: pointer; }
+  .btn-cancel { background: #EBF7FC; color: var(--sea); }
+  .btn-ok { background: var(--booked); color: white; }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-light); font-size: 14px; }
+  .empty-icon { font-size: 44px; margin-bottom: 10px; }
+  .loading-inline { text-align: center; padding: 30px; color: var(--text-light); font-size: 14px; }
+
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1A1A2E; color: white; padding: 12px 22px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 999; transition: transform 0.3s ease; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- PIN -->
+<div class="pin-screen" id="pinScreen">
+  <div class="pin-logo">🏖️</div>
+  <div class="pin-title">Pannello Gestore</div>
+  <div class="pin-sub">Inserisci il PIN per accedere</div>
+  <input class="pin-input" id="pinInput" type="password" inputmode="numeric" maxlength="6" placeholder="••••">
+  <button class="pin-btn" id="pinBtn">Accedi</button>
+  <div class="pin-err" id="pinErr"></div>
+</div>
+
+<!-- TOOLTIP SUPERVISORE -->
+<div class="tooltip-overlay" id="tooltipOverlay">
+  <div class="tooltip-box" id="tooltipContent"></div>
+</div>
+
+<!-- CONFIRM -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title" id="confirmTitle"></div>
+    <div class="confirm-sub" id="confirmSub"></div>
+    <div class="confirm-btns">
+      <button class="btn-cancel" id="confirmCancel">Annulla</button>
+      <button class="btn-ok" id="confirmOk">Azzera</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header" id="mainHeader" style="display:none">
+  <div>
+    <div class="header-title" id="headerTitle">🏖️ Pannello Gestore</div>
+    <div class="header-sub"><span class="header-dot"></span>Connesso in tempo reale</div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs" id="mainTabs" style="display:none">
+  <button class="tab active" onclick="showTab('cassa')">📋 Cassa</button>
+  <button class="tab" onclick="showTab('supervisore')">👁️ Vista</button>
+  <button class="tab" onclick="showTab('statistiche')">📊 Stats</button>
+  <button class="tab" onclick="showTab('config')">⚙️ Config</button>
+</div>
+
+<!-- CASSA -->
+<div class="screen active" id="screen-cassa">
+  <div class="cassa-search">
+    <input type="text" id="codiceSearch" placeholder="CODICE" maxlength="6" oninput="this.value=this.value.toUpperCase()">
+    <button id="searchBtn">Cerca</button>
+  </div>
+  <div id="searchResult"></div>
+  <div class="date-bar" style="margin-top:8px">
+    <div class="date-bar-label">📅 Prenotazioni</div>
+    <input type="date" id="cassaData">
+    <button class="date-today-btn" id="cassaOggiBtn">Oggi</button>
+  </div>
+  <div class="section-title">
+    <span id="listaTitolo">Prenotazioni</span>
+    <span class="badge-count" id="listaCount">0</span>
+  </div>
+  <div id="listaPrenotazioni"><div class="loading-inline">Caricamento...</div></div>
+</div>
+
+<!-- SUPERVISORE -->
+<div class="screen" id="screen-supervisore">
+  <div class="date-bar">
+    <div class="date-bar-label">📅 Data</div>
+    <input type="date" id="supData">
+    <button class="date-today-btn" id="supOggiBtn">Oggi</button>
+  </div>
+  <div id="supStats"></div>
+  <div id="supMapWrapper"></div>
+</div>
+
+<!-- STATISTICHE -->
+<div class="screen" id="screen-statistiche">
+  <div class="date-bar">
+    <div class="date-bar-label">📅 Data</div>
+    <input type="date" id="statData">
+    <button class="date-today-btn" id="statOggiBtn">Oggi</button>
+  </div>
+  <div id="statContent"><div class="loading-inline">Caricamento...</div></div>
+</div>
+
+<!-- CONFIG -->
+<div class="screen" id="screen-config">
+  <div class="admin-section">
+    <div class="admin-section-title">🏖️ Info Lido</div>
+    <div class="config-row"><label>Nome Lido</label><input type="text" id="cfgNomeLido"></div>
+    <div class="config-row"><label>Email gestore</label><input type="email" id="cfgEmail"></div>
+    <div class="config-row"><label>WhatsApp</label><input type="text" id="cfgWhatsapp"></div>
+    <div class="config-row"><label>PIN</label><input type="text" id="cfgPin" maxlength="6"></div>
+  </div>
+  <div class="admin-section">
+    <div class="admin-section-title">🌂 File Ombrelloni</div>
+    <div id="rowsConfig"></div>
+    <button class="add-row-btn" id="addRowBtn">+ Aggiungi Fila</button>
+  </div>
+  <div class="admin-section">
+    <div class="admin-section-title">🗑️ Gestione Dati</div>
+    <div class="date-bar" style="margin-bottom:10px;box-shadow:none;padding:0">
+      <div class="date-bar-label">Data</div>
+      <input type="date" id="resetData" style="flex:1;padding:8px 10px;border:1.5px solid #D0DDE8;border-radius:8px;font-size:13px;outline:none">
+    </div>
+    <button class="btn-danger" id="resetDataBtn">🗑️ Azzera prenotazioni della data</button>
+    <button class="btn-danger" id="resetAllBtn">🗑️ Azzera TUTTE le prenotazioni</button>
+  </div>
+  <div class="admin-section">
+    <button class="btn-save" id="saveConfigBtn">💾 Salva Configurazione</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCJ4vGsoBwtf8tv5Bvj4s17UX2sqUl-ExA",
+  authDomain: "gestione-lido-7c399.firebaseapp.com",
+  projectId: "gestione-lido-7c399",
+  storageBucket: "gestione-lido-7c399.firebasestorage.app",
+  messagingSenderId: "887337288477",
+  appId: "1:887337288477:web:a0531335b5150d1f0917f4"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// ===== STATO =====
+var config = null;
+var unsubCassa = null;
+var unsubSup = null;
+var prenCassaData = {};
+var prenSupData = {};
+var currentTab = 'cassa';
+var confirmCallback = null;
+
+// ===== UTILS =====
+function todayStr() {
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
+}
+function formatDataIT(str) {
+  if (!str) return '';
+  var p = str.split('-');
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show';
+  setTimeout(function() { t.className = 'toast'; }, 2800);
+}
+
+// ===== PIN =====
+async function checkPin() {
+  var val = document.getElementById('pinInput').value;
+  try {
+    var snap = await getDoc(doc(db, 'config', 'lido'));
+    var pinCorretto = snap.exists() ? (snap.data().pin || '1234') : '1234';
+    if (!snap.exists()) {
+      config = { nomeLido:'Lido Prenotazioni', emailGestore:'', whatsapp:'', pin:'1234', rows:[
+        {name:'A',count:8,zona:'normale'},{name:'B',count:8,zona:'normale'},
+        {name:'C',count:8,zona:'family'},{name:'D',count:6,zona:'family'}
+      ]};
+      await setDoc(doc(db,'config','lido'), config);
+    } else {
+      config = snap.data();
+    }
+    if (val === pinCorretto) {
+      document.getElementById('pinScreen').className = 'pin-screen hidden';
+      document.getElementById('mainHeader').style.display = '';
+      document.getElementById('mainTabs').style.display = '';
+      document.getElementById('headerTitle').textContent = '🏖️ ' + config.nomeLido;
+      initAfterLogin();
+    } else {
+      document.getElementById('pinErr').textContent = 'PIN errato. Riprova.';
+      document.getElementById('pinInput').value = '';
+    }
+  } catch(e) {
+    document.getElementById('pinErr').textContent = 'Errore connessione. Riprova.';
+  }
+}
+
+document.getElementById('pinBtn').onclick = checkPin;
+document.getElementById('pinInput').addEventListener('keydown', function(e) { if (e.key==='Enter') checkPin(); });
+
+// ===== INIT AFTER LOGIN =====
+function initAfterLogin() {
+  var t = todayStr();
+  document.getElementById('cassaData').value = t;
+  document.getElementById('supData').value = t;
+  document.getElementById('statData').value = t;
+  document.getElementById('resetData').value = t;
+  renderConfigForm();
+  listenCassa(t);
+  setupEvents();
+}
+
+function setupEvents() {
+  document.getElementById('cassaData').onchange = function() { listenCassa(this.value); };
+  document.getElementById('cassaOggiBtn').onclick = function() {
+    var t = todayStr(); document.getElementById('cassaData').value = t; listenCassa(t);
+  };
+  document.getElementById('searchBtn').onclick = cercaPrenot;
+  document.getElementById('codiceSearch').addEventListener('keydown', function(e) { if(e.key==='Enter') cercaPrenot(); });
+
+  document.getElementById('supData').onchange = function() { renderSupervisore(this.value); };
+  document.getElementById('supOggiBtn').onclick = function() {
+    var t = todayStr(); document.getElementById('supData').value = t; renderSupervisore(t);
+  };
+
+  document.getElementById('statData').onchange = function() { renderStats(this.value); };
+  document.getElementById('statOggiBtn').onclick = function() {
+    var t = todayStr(); document.getElementById('statData').value = t; renderStats(t);
+  };
+
+  document.getElementById('addRowBtn').onclick = addRowConfig;
+  document.getElementById('saveConfigBtn').onclick = saveConfig;
+
+  document.getElementById('resetDataBtn').onclick = function() {
+    var d = document.getElementById('resetData').value;
+    if (!d) { showToast('⚠️ Seleziona una data'); return; }
+    openConfirm('Azzera prenotazioni del ' + formatDataIT(d) + '?', 'Verranno eliminate tutte le prenotazioni di questa data.', function() { doResetData(d); });
+  };
+  document.getElementById('resetAllBtn').onclick = function() {
+    openConfirm('Azzera TUTTE le prenotazioni?', 'Tutte le prenotazioni di ogni data verranno eliminate. Operazione non reversibile.', doResetAll);
+  };
+  document.getElementById('confirmCancel').onclick = closeConfirm;
+  document.getElementById('confirmOk').onclick = function() { if (confirmCallback) confirmCallback(); };
+}
+
+// ===== TAB =====
+window.showTab = function(name) {
+  document.querySelectorAll('.tab').forEach(function(t,i) { t.className = 'tab'; });
+  document.querySelectorAll('.screen').forEach(function(s) { s.className = 'screen'; });
+  document.getElementById('screen-' + name).className = 'screen active';
+  var idx = {cassa:0, supervisore:1, statistiche:2, config:3};
+  document.querySelectorAll('.tab')[idx[name]].className = 'tab active';
+  currentTab = name;
+  if (name === 'supervisore') {
+    var d = document.getElementById('supData').value || todayStr();
+    renderSupervisore(d);
+  }
+  if (name === 'statistiche') {
+    var d2 = document.getElementById('statData').value || todayStr();
+    renderStats(d2);
+  }
+  if (name === 'config') renderConfigForm();
+};
+
+// ===== CASSA — REALTIME =====
+function listenCassa(data) {
+  if (unsubCassa) unsubCassa();
+  document.getElementById('listaPrenotazioni').innerHTML = '<div class="loading-inline">Caricamento...</div>';
+  document.getElementById('listaTitolo').textContent = 'Prenotazioni del ' + formatDataIT(data);
+  unsubCassa = onSnapshot(
+    query(collection(db,'prenotazioni'), where('data','==',data)),
+    function(snapshot) {
+      prenCassaData = {};
+      snapshot.forEach(function(d) { var dd = d.data(); prenCassaData[dd.posto] = dd; });
+      renderLista();
+    }
+  );
+}
+
+function renderLista() {
+  var lista = document.getElementById('listaPrenotazioni');
+  var keys = Object.keys(prenCassaData);
+  document.getElementById('listaCount').textContent = keys.length;
+  if (keys.length === 0) {
+    lista.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div>Nessuna prenotazione per questa data</div>';
+    return;
+  }
+  keys.sort(function(a,b) { return new Date(prenCassaData[a].ts) - new Date(prenCassaData[b].ts); });
+  var html = '';
+  keys.forEach(function(posto) {
+    var p = prenCassaData[posto];
+    var postoLabel = posto.replace('-','');
+    var ora = new Date(p.ts).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+    var zi = p.zona === 'family' ? '👨‍👩‍👧' : '🌊';
+    html += '<div class="prenot-card ' + (p.checkin?'done':'') + '">' +
+      '<div class="prenot-left">' +
+      '<div class="prenot-name">' + p.nome + ' ' + p.cognome + '</div>' +
+      '<div class="prenot-detail">' + zi + ' ⛱️ ' + postoLabel + ' · ' + ora + (p.checkin?' · ✕ '+p.checkinOra:'') + ' · <span class="prenot-codice">' + p.codice + '</span></div>' +
+      '</div>' +
+      '<span class="tag ' + (p.checkin?'arrivato':'attesa') + '">' + (p.checkin?'✅ Arrivato':'⏳ Attesa') + '</span>' +
+      '</div>';
+  });
+  lista.innerHTML = html;
+}
+
+function cercaPrenot() {
+  var codice = (document.getElementById('codiceSearch').value || '').trim().toUpperCase();
+  var result = document.getElementById('searchResult');
+  if (!codice) { result.innerHTML = ''; return; }
+  var trovato = null; var postoTrovato = null;
+  for (var p in prenCassaData) {
+    if (prenCassaData[p].codice === codice) { trovato = prenCassaData[p]; postoTrovato = p; break; }
+  }
+  // cerca anche in altre date se non trovato
+  if (!trovato) {
+    // prova ricerca globale
+    cercaGlobale(codice);
+    return;
+  }
+  mostraRisultato(postoTrovato, trovato);
+}
+
+async function cercaGlobale(codice) {
+  var result = document.getElementById('searchResult');
+  result.innerHTML = '<div class="loading-inline">Ricerca...</div>';
+  try {
+    var snap = await getDocs(query(collection(db,'prenotazioni'), where('codice','==',codice)));
+    if (snap.empty) {
+      result.innerHTML = '<div class="result-card not-found"><div class="result-name">❌ Codice non trovato</div><div class="result-row">Verifica il codice e riprova.</div></div>';
+      return;
+    }
+    var d = snap.docs[0].data();
+    mostraRisultato(d.posto, d);
+  } catch(e) {
+    result.innerHTML = '<div class="result-card not-found"><div class="result-name">⚠️ Errore ricerca</div></div>';
+  }
+}
+
+function mostraRisultato(posto, p) {
+  var result = document.getElementById('searchResult');
+  var postoLabel = posto.replace('-','');
+  var isChecked = p.checkin;
+  var zonaLabel = p.zona === 'family' ? '👨‍👩‍👧 Zona Family' : '🌊 Zona Normale';
+  var dataLabel = formatDataIT(p.data || '');
+  result.innerHTML =
+    '<div class="result-card ' + (isChecked?'checked-in':'') + '">' +
+    '<div class="result-name">👤 ' + p.nome + ' ' + p.cognome + '</div>' +
+    '<div class="result-row">📱 <strong>' + p.tel + '</strong></div>' +
+    '<div class="result-row">✉️ ' + (p.email||'–') + '</div>' +
+    '<div class="result-row">📅 <strong>' + dataLabel + '</strong> · ' + zonaLabel + '</div>' +
+    '<div><span class="result-posto ' + (isChecked?'checked':'') + '">⛱️ Ombrellone ' + postoLabel + '</span></div>' +
+    (isChecked
+      ? '<div style="color:var(--green);font-weight:700;margin-top:12px;">✅ Check-in alle ' + (p.checkinOra||'') + '</div>'
+      : '<button class="btn-checkin" id="checkinBtn">✅ Conferma Arrivo</button>'
+    ) + '</div>';
+  if (!isChecked) {
+    document.getElementById('checkinBtn').onclick = function() { doCheckin(p.data + '_' + posto, posto, p); };
+  }
+}
+
+async function doCheckin(docId, posto, p) {
+  var ora = new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  try {
+    await updateDoc(doc(db,'prenotazioni', docId), { checkin: true, checkinOra: ora });
+    showToast('✅ Check-in alle ' + ora);
+    // aggiorna visualizzazione
+    p.checkin = true; p.checkinOra = ora;
+    mostraRisultato(posto, p);
+    renderLista();
+    if (currentTab === 'supervisore') {
+      var d = document.getElementById('supData').value;
+      renderSupervisore(d);
+    }
+  } catch(e) { showToast('⚠️ Errore check-in'); }
+}
+
+// ===== SUPERVISORE =====
+async function renderSupervisore(data) {
+  if (!config) return;
+  document.getElementById('supStats').innerHTML = '<div class="loading-inline">Caricamento...</div>';
+  document.getElementById('supMapWrapper').innerHTML = '';
+  try {
+    var snap = await getDocs(query(collection(db,'prenotazioni'), where('data','==',data)));
+    prenSupData = {};
+    snap.forEach(function(d) { var dd = d.data(); prenSupData[dd.posto] = dd; });
+
+    var rows = config.rows || [];
+    var totale = 0; rows.forEach(function(r) { totale += r.count; });
+    var prenotati = 0; var occupati = 0;
+    for (var k in prenSupData) { if (prenSupData[k].checkin) occupati++; else prenotati++; }
+    var liberi = totale - prenotati - occupati;
+
+    document.getElementById('supStats').innerHTML =
+      '<div class="sup-stats">' +
+      '<div class="sup-stat liberi"><div class="sup-stat-num">' + liberi + '</div><div class="sup-stat-label">🟦 Liberi</div></div>' +
+      '<div class="sup-stat prenotati"><div class="sup-stat-num">' + prenotati + '</div><div class="sup-stat-label">🟠 Prenotati</div></div>' +
+      '<div class="sup-stat occupati"><div class="sup-stat-num">' + occupati + '</div><div class="sup-stat-label">🔴 Occupati</div></div>' +
+      '</div>';
+
+    var wrapper = document.getElementById('supMapWrapper');
+    wrapper.innerHTML = '';
+    ['normale','family'].forEach(function(zona) {
+      var zonaRows = rows.filter(function(r) { return (r.zona||'normale') === zona; });
+      if (!zonaRows.length) return;
+      var block = document.createElement('div'); block.className = 'sup-zona-block';
+      var title = document.createElement('div');
+      title.className = 'sup-zona-title ' + zona;
+      title.textContent = zona === 'family' ? '👨‍👩‍👧 Zona Family' : '🌊 Zona Normale';
+      block.appendChild(title);
+      var gridWrap = document.createElement('div'); gridWrap.className = 'sup-grid-wrap';
+      var grid = document.createElement('div'); grid.className = 'map-grid';
+      var maxCols = 0; zonaRows.forEach(function(r) { if (r.count > maxCols) maxCols = r.count; });
+      var hRow = document.createElement('div'); hRow.className = 'map-row';
+      var sp = document.createElement('div'); sp.style.width='22px'; sp.style.flexShrink='0'; hRow.appendChild(sp);
+      for (var c = 1; c <= maxCols; c++) {
+        var lbl = document.createElement('div'); lbl.className = 'row-label'; lbl.textContent = c; hRow.appendChild(lbl);
+      }
+      grid.appendChild(hRow);
+      zonaRows.forEach(function(row) {
+        var rowEl = document.createElement('div'); rowEl.className = 'map-row';
+        var rLbl = document.createElement('div'); rLbl.className = 'row-label'; rLbl.textContent = row.name; rowEl.appendChild(rLbl);
+        for (var ci = 1; ci <= row.count; ci++) {
+          var posto = row.name + '-' + ci;
+          var prenot = prenSupData[posto];
+          var div = document.createElement('div'); div.className = 'sup-omb';
+          if (prenot && prenot.checkin) {
+            div.className += ' occupied';
+            div.innerHTML = '<div class="omb-icon" style="font-size:15px;font-weight:900">✕</div><div class="omb-num">' + row.name+ci + '</div><div class="omb-ora">' + (prenot.checkinOra||'') + '</div>';
+          } else if (prenot) {
+            div.className += ' booked';
+            div.innerHTML = '<div class="omb-icon">⛱️</div><div class="omb-num">' + row.name+ci + '</div><div class="omb-name">' + (prenot.cognome||'') + '</div>';
+          } else {
+            div.className += (zona==='family'?' free-family':' free');
+            div.innerHTML = '<div class="omb-icon">⛱️</div><div class="omb-num">' + row.name+ci + '</div>';
+          }
+          if (prenot) {
+            (function(p2, pr, d2) {
+              div.onclick = function() { showTooltip(p2, pr, d2); };
+            })(posto, prenot, data);
+          }
+          rowEl.appendChild(div);
+        }
+        for (var ci2 = row.count+1; ci2 <= maxCols; ci2++) {
+          var emp = document.createElement('div'); emp.className = 'sup-omb disabled'; rowEl.appendChild(emp);
+        }
+        grid.appendChild(rowEl);
+      });
+      gridWrap.appendChild(grid); block.appendChild(gridWrap); wrapper.appendChild(block);
+    });
+  } catch(e) { showToast('⚠️ Errore caricamento supervisore'); }
+}
+
+function showTooltip(posto, p, data) {
+  var postoLabel = posto.replace('-','');
+  var zonaLabel = p.zona === 'family' ? '👨‍👩‍👧 Zona Family' : '🌊 Zona Normale';
+  var statusBadge = p.checkin
+    ? '<span class="tooltip-badge occupato">🔴 Occupato dalle ' + (p.checkinOra||'–') + '</span>'
+    : '<span class="tooltip-badge prenotato">🟠 Prenotato – non ancora arrivato</span>';
+  var checkinBtn = !p.checkin
+    ? '<button class="tooltip-checkin-btn" id="tooltipCheckinBtn">✅ Conferma Arrivo</button>'
+    : '';
+  document.getElementById('tooltipContent').innerHTML =
+    '<div class="tooltip-posto">⛱️ Ombrellone ' + postoLabel + '</div>' +
+    '<div class="tooltip-zona">' + zonaLabel + ' · 📅 ' + formatDataIT(data) + '</div>' +
+    statusBadge +
+    '<div class="tooltip-row">👤 <strong>' + p.nome + ' ' + p.cognome + '</strong></div>' +
+    '<div class="tooltip-row">📱 <strong>' + p.tel + '</strong></div>' +
+    '<div class="tooltip-row">✉️ ' + (p.email||'–') + '</div>' +
+    '<div class="tooltip-row">🔑 Codice: <strong>' + p.codice + '</strong></div>' +
+    checkinBtn +
+    '<button class="tooltip-close" id="tooltipClose">Chiudi</button>';
+  document.getElementById('tooltipOverlay').className = 'tooltip-overlay open';
+  document.getElementById('tooltipClose').onclick = function() {
+    document.getElementById('tooltipOverlay').className = 'tooltip-overlay';
+  };
+  if (!p.checkin) {
+    document.getElementById('tooltipCheckinBtn').onclick = function() {
+      document.getElementById('tooltipOverlay').className = 'tooltip-overlay';
+      doCheckin(data + '_' + posto, posto, p);
+      setTimeout(function() { renderSupervisore(data); }, 500);
+    };
+  }
+}
+
+// ===== STATISTICHE =====
+async function renderStats(data) {
+  var content = document.getElementById('statContent');
+  content.innerHTML = '<div class="loading-inline">Caricamento...</div>';
+  if (!config) return;
+  try {
+    var snap = await getDocs(query(collection(db,'prenotazioni'), where('data','==',data)));
+    var prenList = [];
+    snap.forEach(function(d) { prenList.push(d.data()); });
+
+    var rows = config.rows || [];
+    var totale = 0; rows.forEach(function(r) { totale += r.count; });
+    var prenotati = prenList.length;
+    var occupati = prenList.filter(function(p) { return p.checkin; }).length;
+    var liberi = totale - prenotati;
+    var percOcc = totale > 0 ? Math.round((prenotati/totale)*100) : 0;
+    var normPren = prenList.filter(function(p) { return p.zona !== 'family'; }).length;
+    var famPren = prenList.filter(function(p) { return p.zona === 'family'; }).length;
+    var totNorm = 0; var totFam = 0;
+    rows.forEach(function(r) { if ((r.zona||'normale')==='family') totFam+=r.count; else totNorm+=r.count; });
+
+    content.innerHTML =
+      '<div class="stat-card">' +
+      '<div class="stat-card-title">📅 ' + formatDataIT(data) + '</div>' +
+      '<div class="stat-big">' + prenotati + '</div>' +
+      '<div class="stat-big-label">prenotazioni totali su ' + totale + ' posti</div>' +
+      '</div>' +
+      '<div class="stat-card">' +
+      '<div class="stat-card-title">Riepilogo posti</div>' +
+      '<div class="stat-row"><div class="stat-row-label">🟦 Liberi</div><div class="stat-row-val" style="color:var(--free)">' + liberi + '</div></div>' +
+      '<div class="stat-row"><div class="stat-row-label">🟠 Prenotati</div><div class="stat-row-val" style="color:var(--booked)">' + prenotati + '</div></div>' +
+      '<div class="stat-row"><div class="stat-row-label">🔴 Con check-in</div><div class="stat-row-val" style="color:var(--occupied)">' + occupati + '</div></div>' +
+      '<div class="stat-row"><div class="stat-row-label">📊 Tasso occupazione</div><div class="stat-row-val">' + percOcc + '%</div></div>' +
+      '</div>' +
+      '<div class="stat-card">' +
+      '<div class="stat-card-title">Per zona</div>' +
+      '<div class="stat-bar-wrap">' +
+      '<div class="stat-bar-row">' +
+      '<div class="stat-bar-label">🌊 Normale</div>' +
+      '<div class="stat-bar"><div class="stat-bar-fill" style="width:' + (totNorm>0?Math.round(normPren/totNorm*100):0) + '%;background:var(--sea)"></div></div>' +
+      '<div class="stat-bar-val" style="color:var(--sea)">' + normPren + '</div>' +
+      '</div>' +
+      '<div class="stat-bar-row">' +
+      '<div class="stat-bar-label">👨‍👩‍👧 Family</div>' +
+      '<div class="stat-bar"><div class="stat-bar-fill" style="width:' + (totFam>0?Math.round(famPren/totFam*100):0) + '%;background:var(--family)"></div>' +
+      '</div><div class="stat-bar-val" style="color:var(--family)">' + famPren + '</div>' +
+      '</div></div></div>';
+  } catch(e) { content.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Errore caricamento statistiche</div>'; }
+}
+
+// ===== CONFIG =====
+function renderConfigForm() {
+  if (!config) return;
+  document.getElementById('cfgNomeLido').value = config.nomeLido || '';
+  document.getElementById('cfgEmail').value = config.emailGestore || '';
+  document.getElementById('cfgWhatsapp').value = config.whatsapp || '';
+  document.getElementById('cfgPin').value = config.pin || '1234';
+  renderRowsConfig();
+}
+
+function renderRowsConfig() {
+  var rows = config.rows || [];
+  var html = '';
+  rows.forEach(function(row, i) {
+    var z = row.zona || 'normale';
+    html += '<div class="row-config-item">' +
+      '<label>Fila</label><input type="text" maxlength="3" value="' + row.name + '" id="rName_'+i+'" style="width:44px">' +
+      '<label>Posti</label><input type="number" min="1" max="30" value="' + row.count + '" id="rCount_'+i+'" style="width:52px">' +
+      '<label>Zona</label>' +
+      '<select id="rZona_'+i+'">' +
+      '<option value="normale"'+(z==='normale'?' selected':'')+'>🌊 Norm.</option>' +
+      '<option value="family"'+(z==='family'?' selected':'')+'>👨‍👩‍👧 Family</option>' +
+      '</select>' +
+      '<button class="remove-row-btn" data-idx="'+i+'">✕</button>' +
+      '</div>';
+  });
+  document.getElementById('rowsConfig').innerHTML = html;
+  document.querySelectorAll('.remove-row-btn').forEach(function(btn) {
+    btn.onclick = function() { config.rows.splice(parseInt(this.dataset.idx),1); renderRowsConfig(); };
+  });
+}
+
+function addRowConfig() {
+  if (!config.rows) config.rows = [];
+  config.rows.push({ name: String.fromCharCode(65+config.rows.length), count: 8, zona: 'normale' });
+  renderRowsConfig();
+}
+
+async function saveConfig() {
+  var rows = [];
+  var n = (config.rows||[]).length;
+  for (var i = 0; i < n; i++) {
+    var nm = (document.getElementById('rName_'+i).value||'').trim();
+    var ct = parseInt(document.getElementById('rCount_'+i).value)||8;
+    var zon = document.getElementById('rZona_'+i).value||'normale';
+    if (nm) rows.push({name:nm,count:ct,zona:zon});
+  }
+  config.nomeLido = (document.getElementById('cfgNomeLido').value||'').trim()||'Lido';
+  config.emailGestore = (document.getElementById('cfgEmail').value||'').trim();
+  config.whatsapp = (document.getElementById('cfgWhatsapp').value||'').trim();
+  config.pin = (document.getElementById('cfgPin').value||'').trim()||'1234';
+  config.rows = rows;
+  try {
+    await setDoc(doc(db,'config','lido'), config);
+    document.getElementById('headerTitle').textContent = '🏖️ ' + config.nomeLido;
+    showToast('✅ Configurazione salvata!');
+  } catch(e) { showToast('⚠️ Errore salvataggio config'); }
+}
+
+// ===== RESET =====
+async function doResetData(data) {
+  closeConfirm();
+  try {
+    var snap = await getDocs(query(collection(db,'prenotazioni'), where('data','==',data)));
+    var batch = writeBatch(db);
+    snap.docs.forEach(function(d) { batch.delete(d.ref); });
+    await batch.commit();
+    showToast('🗑️ Prenotazioni del ' + formatDataIT(data) + ' eliminate');
+    var cassaD = document.getElementById('cassaData').value;
+    if (cassaD === data) renderLista();
+  } catch(e) { showToast('⚠️ Errore eliminazione'); }
+}
+
+async function doResetAll() {
+  closeConfirm();
+  try {
+    var snap = await getDocs(collection(db,'prenotazioni'));
+    var batch = writeBatch(db);
+    snap.docs.forEach(function(d) { batch.delete(d.ref); });
+    await batch.commit();
+    showToast('🗑️ Tutte le prenotazioni eliminate');
+    renderLista();
+  } catch(e) { showToast('⚠️ Errore eliminazione'); }
+}
+
+// ===== CONFIRM =====
+function openConfirm(title, sub, cb) {
+  confirmCallback = cb;
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmSub').textContent = sub;
+  document.getElementById('confirmOverlay').className = 'confirm-overlay open';
+}
+function closeConfirm() {
+  document.getElementById('confirmOverlay').className = 'confirm-overlay';
+  confirmCallback = null;
+}
+</script>
+</body>
+</html>
