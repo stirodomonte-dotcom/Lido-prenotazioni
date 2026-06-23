@@ -392,19 +392,10 @@ window.confermaPrenota = async function(posto, zona) {
   var cognome = (document.getElementById('fCognome').value || '').trim();
   var tel     = (document.getElementById('fTel').value || '').trim();
   var email   = (document.getElementById('fEmail').value || '').trim();
-  if (!nome || !cognome || !tel || !email) { showToast('⚠️ Compila tutti i campi'); return; }
+  if (!nome || !cognome || !tel || !email) { showToast('\u26a0\ufe0f Compila tutti i campi'); return; }
 
   var btn = document.getElementById('btnConferma');
   if (btn) { btn.disabled = true; btn.textContent = 'Salvataggio...'; }
-
-  // verifica che non sia stato prenotato nel frattempo
-  var snap = await getDoc(doc(db, 'prenotazioni', mappaData + '_' + posto));
-  if (snap.exists()) {
-    showToast('⚠️ Ombrellone già prenotato! Scegline un altro.');
-    if (btn) { btn.disabled = false; btn.textContent = 'Conferma Prenotazione'; }
-    closeModal();
-    return;
-  }
 
   var codice = generaCodice();
   var ts = new Date().toISOString();
@@ -413,12 +404,24 @@ window.confermaPrenota = async function(posto, zona) {
     ts: ts, checkin: false, zona: zona, data: mappaData, posto: posto
   };
 
+  // timeout sicurezza 12 secondi
+  var timedOut = false;
+  var tid = setTimeout(function() {
+    timedOut = true;
+    showToast('\u26a0\ufe0f Connessione lenta. Riprova.');
+    if (btn) { btn.disabled = false; btn.textContent = 'Conferma Prenotazione'; }
+  }, 12000);
+
   try {
     await setDoc(doc(db, 'prenotazioni', mappaData + '_' + posto), prenotazione);
+    clearTimeout(tid);
+    if (timedOut) return;
     selectedPostazione = null;
     showConferma(posto, codice, nome, cognome, tel, email, zona);
   } catch(e) {
-    showToast('⚠️ Errore salvataggio. Riprova.');
+    clearTimeout(tid);
+    if (timedOut) return;
+    showToast('\u26a0\ufe0f Errore: ' + (e.code || 'riprova'));
     if (btn) { btn.disabled = false; btn.textContent = 'Conferma Prenotazione'; }
   }
 };
@@ -440,16 +443,24 @@ function showConferma(posto, codice, nome, cognome, tel, email, zona) {
     '<div class="conferma-box">' +
     '<div class="conferma-icon">✅</div>' +
     '<div class="conferma-title">Prenotazione Confermata!</div>' +
-    '<div class="conferma-sub">Mostra il codice alla cassa all\'arrivo</div>' +
+    '<div class="conferma-sub">Mostra il QR code o il codice alla cassa</div>' +
     '<div class="codice-box">' +
     '<div class="codice-label">Il tuo Codice</div>' +
     '<div class="codice-value">' + codice + '</div>' +
+    '<div style="margin:14px 0 8px">' + generateQR(codice) + '</div>' +
     '<div class="codice-info">⛱️ Ombrellone ' + postazione + ' · ' + zonaLabel + '<br>📅 ' + dataLabel + '</div>' +
     '</div>' +
     '<div class="dettagli-prenota">👤 <strong>' + nome + ' ' + cognome + '</strong><br>📱 ' + tel + '<br>✉️ ' + email + '<br>⏰ Prenotato alle ' + ora + '</div>' +
     (emailGestore ? '<a class="btn-email" href="' + mailtoLink + '">📧 Invia conferma al gestore</a>' : '') +
     '<button class="btn-chiudi-conf" onclick="closeModal()">Chiudi</button>' +
     '</div>';
+}
+
+// ===== QR CODE =====
+function generateQR(codice) {
+  // Usa QRServer API — nessuna libreria da installare
+  var url = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(codice) + '&margin=10&color=0077B6';
+  return '<img src="' + url + '" width="160" height="160" style="border-radius:12px;display:block;margin:0 auto;" alt="QR ' + codice + '">';
 }
 
 // avvio

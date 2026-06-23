@@ -381,7 +381,19 @@ function setupEvents() {
     var t = todayStr(); document.getElementById('cassaData').value = t; listenCassa(t);
   };
   document.getElementById('searchBtn').onclick = cercaPrenot;
-  document.getElementById('codiceSearch').addEventListener('keydown', function(e) { if(e.key==='Enter') cercaPrenot(); });
+  // Lettore barcode/QR: invia Enter automaticamente dopo la scansione
+  document.getElementById('codiceSearch').addEventListener('keydown', function(e) {
+    if(e.key==='Enter') { cercaPrenot(); }
+  });
+  // Auto-search dopo 500ms di inattività (per scanner veloci)
+  var scanTimer = null;
+  document.getElementById('codiceSearch').addEventListener('input', function() {
+    clearTimeout(scanTimer);
+    var val = this.value;
+    if (val.length >= 5) {
+      scanTimer = setTimeout(function() { cercaPrenot(); }, 400);
+    }
+  });
 
   document.getElementById('supData').onchange = function() { renderSupervisore(this.value); };
   document.getElementById('supOggiBtn').onclick = function() {
@@ -514,6 +526,8 @@ function mostraRisultato(posto, p) {
     '<div class="result-row">✉️ ' + (p.email||'–') + '</div>' +
     '<div class="result-row">📅 <strong>' + dataLabel + '</strong> · ' + zonaLabel + '</div>' +
     '<div><span class="result-posto ' + (isChecked?'checked':'') + '">⛱️ Ombrellone ' + postoLabel + '</span></div>' +
+    generateQR(p.codice) +
+    '<div style="text-align:center;font-size:11px;color:var(--text-light);margin-bottom:10px;">Scansiona o digita: <strong>' + p.codice + '</strong></div>' +
     (isChecked
       ? '<div style="color:var(--green);font-weight:700;margin-top:12px;">✅ Check-in alle ' + (p.checkinOra||'') + '</div>'
       : '<button class="btn-checkin" id="checkinBtn">✅ Conferma Arrivo</button>'
@@ -780,6 +794,12 @@ async function doResetAll() {
     showToast('🗑️ Tutte le prenotazioni eliminate');
     renderLista();
   } catch(e) { showToast('⚠️ Errore eliminazione'); }
+}
+
+// ===== QR CODE =====
+function generateQR(codice) {
+  var url = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(codice) + '&margin=8&color=005F92';
+  return '<img src="' + url + '" width="140" height="140" style="border-radius:10px;display:block;margin:8px auto 4px;" alt="QR">';
 }
 
 // ===== CONFIRM =====
