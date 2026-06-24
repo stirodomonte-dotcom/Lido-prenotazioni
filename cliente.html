@@ -114,6 +114,8 @@
     .modal-overlay { align-items: center; }
   }
 </style>
+<!-- JsBarcode per Code 128 -->
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
 
@@ -439,28 +441,90 @@ function showConferma(posto, codice, nome, cognome, tel, email, zona) {
     '\nCellulare: ' + tel + '\nEmail: ' + email + '\nOra: ' + ora;
   var mailtoLink = 'mailto:' + emailGestore + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
 
+  var safeNome = nome.replace(/'/g,"");
+  var safeCognome = cognome.replace(/'/g,"");
+  var safePostazione = postazione.replace(/'/g,"");
+  var safeDataLabel = dataLabel.replace(/'/g,"");
   document.getElementById('modalContent').innerHTML =
     '<div class="conferma-box">' +
     '<div class="conferma-icon">✅</div>' +
     '<div class="conferma-title">Prenotazione Confermata!</div>' +
-    '<div class="conferma-sub">Mostra il QR code o il codice alla cassa</div>' +
+    '<div class="conferma-sub">Mostra il barcode alla cassa all\'arrivo</div>' +
     '<div class="codice-box">' +
     '<div class="codice-label">Il tuo Codice</div>' +
     '<div class="codice-value">' + codice + '</div>' +
-    '<div style="margin:14px 0 8px">' + generateQR(codice) + '</div>' +
+    '<div style="margin:14px 0 6px;overflow-x:auto;text-align:center"><canvas id="barcodeCanvas"></canvas></div>' +
     '<div class="codice-info">⛱️ Ombrellone ' + postazione + ' · ' + zonaLabel + '<br>📅 ' + dataLabel + '</div>' +
     '</div>' +
     '<div class="dettagli-prenota">👤 <strong>' + nome + ' ' + cognome + '</strong><br>📱 ' + tel + '<br>✉️ ' + email + '<br>⏰ Prenotato alle ' + ora + '</div>' +
-    (emailGestore ? '<a class="btn-email" href="' + mailtoLink + '">📧 Invia conferma al gestore</a>' : '') +
+    '<button class="btn-email" onclick="scaricaBarcode('' + codice + '','' + safeNome + '','' + safeCognome + '','' + safeDataLabel + '','' + safePostazione + '')">📥 Salva Barcode (PNG)</button>' +
+    (emailGestore ? '<a class="btn-email" style="background:#2D9D78;margin-top:8px" href="' + mailtoLink + '">📧 Invia conferma al gestore</a>' : '') +
     '<button class="btn-chiudi-conf" onclick="closeModal()">Chiudi</button>' +
     '</div>';
+  renderBarcode(codice, 'barcodeCanvas');
 }
 
-// ===== QR CODE =====
-function generateQR(codice) {
-  // Usa QRServer API — nessuna libreria da installare
-  var url = 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=' + encodeURIComponent(codice) + '&margin=10&color=0077B6';
-  return '<img src="' + url + '" width="160" height="160" style="border-radius:12px;display:block;margin:0 auto;" alt="QR ' + codice + '">';
+// ===== BARCODE Code 128 =====
+function renderBarcode(codice, canvasId) {
+  setTimeout(function() {
+    var canvas = document.getElementById(canvasId);
+    if (!canvas) return;
+    try {
+      JsBarcode(canvas, codice, {
+        format: "CODE128",
+        width: 3,
+        height: 80,
+        displayValue: true,
+        fontSize: 18,
+        fontOptions: "bold",
+        lineColor: "#005F92",
+        background: "#FFFFFF",
+        margin: 10
+      });
+    } catch(e) { console.log('Barcode error:', e); }
+  }, 100);
+}
+
+function scaricaBarcode(codice, nome, cognome, dataLabel, postazione) {
+  var canvas = document.createElement('canvas');
+  canvas.width = 520;
+  canvas.height = 220;
+  var ctx = canvas.getContext('2d');
+
+  // sfondo bianco
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // genera barcode su canvas temporaneo
+  var bcCanvas = document.createElement('canvas');
+  try {
+    JsBarcode(bcCanvas, codice, {
+      format: "CODE128",
+      width: 3,
+      height: 90,
+      displayValue: true,
+      fontSize: 16,
+      fontOptions: "bold",
+      lineColor: "#005F92",
+      background: "#FFFFFF",
+      margin: 8
+    });
+    // centra barcode
+    var bcX = Math.round((canvas.width - bcCanvas.width) / 2);
+    ctx.drawImage(bcCanvas, bcX, 10);
+  } catch(e) {}
+
+  // testo sotto
+  ctx.fillStyle = '#1A1A2E';
+  ctx.font = 'bold 15px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText(nome + ' ' + cognome + '  ·  Ombrellone ' + postazione + '  ·  ' + dataLabel, canvas.width/2, canvas.height - 20);
+
+  // download
+  var link = document.createElement('a');
+  link.download = 'prenotazione-' + codice + '.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
 }
 
 // avvio
