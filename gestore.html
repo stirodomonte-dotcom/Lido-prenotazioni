@@ -171,7 +171,6 @@
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1A1A2E; color: white; padding: 12px 22px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 999; transition: transform 0.3s ease; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
   .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
 
@@ -527,12 +526,12 @@ function mostraRisultato(posto, p) {
     '<div class="result-row">✉️ ' + (p.email||'–') + '</div>' +
     '<div class="result-row">📅 <strong>' + dataLabel + '</strong> · ' + zonaLabel + '</div>' +
     '<div><span class="result-posto ' + (isChecked?'checked':'') + '">⛱️ Ombrellone ' + postoLabel + '</span></div>' +
-    '<div style="background:white;border-radius:10px;padding:10px;margin:12px 0 4px;overflow-x:auto;text-align:center"><canvas id="bcResult"></canvas></div>' +
+    generateQR(p.codice) +
+    '<div style="text-align:center;font-size:11px;color:var(--text-light);margin-bottom:10px;">Scansiona o digita: <strong>' + p.codice + '</strong></div>' +
     (isChecked
       ? '<div style="color:var(--green);font-weight:700;margin-top:12px;">✅ Check-in alle ' + (p.checkinOra||'') + '</div>'
       : '<button class="btn-checkin" id="checkinBtn">✅ Conferma Arrivo</button>'
     ) + '</div>';
-  renderBarcode(p.codice, 'bcResult');
   if (!isChecked) {
     document.getElementById('checkinBtn').onclick = function() { doCheckin(p.data + '_' + posto, posto, p); };
   }
@@ -647,11 +646,9 @@ function showTooltip(posto, p, data) {
     '<div class="tooltip-row">📱 <strong>' + p.tel + '</strong></div>' +
     '<div class="tooltip-row">✉️ ' + (p.email||'–') + '</div>' +
     '<div class="tooltip-row">🔑 Codice: <strong>' + p.codice + '</strong></div>' +
-    '<div style="background:white;border-radius:8px;padding:8px;margin:10px 0 4px;text-align:center"><canvas id="bcTooltip"></canvas></div>' +
     checkinBtn +
     '<button class="tooltip-close" id="tooltipClose">Chiudi</button>';
   document.getElementById('tooltipOverlay').className = 'tooltip-overlay open';
-  renderBarcode(p.codice, 'bcTooltip');
   document.getElementById('tooltipClose').onclick = function() {
     document.getElementById('tooltipOverlay').className = 'tooltip-overlay';
   };
@@ -799,25 +796,10 @@ async function doResetAll() {
   } catch(e) { showToast('⚠️ Errore eliminazione'); }
 }
 
-// ===== BARCODE Code 128 =====
-function renderBarcode(codice, canvasId) {
-  setTimeout(function() {
-    var canvas = document.getElementById(canvasId);
-    if (!canvas || typeof JsBarcode === 'undefined') return;
-    try {
-      JsBarcode(canvas, codice, {
-        format: "CODE128",
-        width: 3,
-        height: 70,
-        displayValue: true,
-        fontSize: 16,
-        fontOptions: "bold",
-        lineColor: "#005F92",
-        background: "#FFFFFF",
-        margin: 8
-      });
-    } catch(e) {}
-  }, 100);
+// ===== QR CODE =====
+function generateQR(codice) {
+  var url = 'https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=' + encodeURIComponent(codice) + '&margin=8&color=005F92';
+  return '<img src="' + url + '" width="140" height="140" style="border-radius:10px;display:block;margin:8px auto 4px;" alt="QR">';
 }
 
 // ===== CONFIRM =====
