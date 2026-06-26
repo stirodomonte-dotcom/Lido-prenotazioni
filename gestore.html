@@ -137,6 +137,14 @@
   .remove-row-btn { background: none; border: none; color: var(--booked); font-size: 18px; cursor: pointer; padding: 2px 4px; }
   .btn-save { width: 100%; background: var(--sea); color: white; border: none; padding: 13px; border-radius: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
   .btn-danger { width: 100%; background: #FEE2DC; color: var(--booked); border: none; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+  .price-item { background: #F4F8FC; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .price-item-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
+  .price-item-row:last-child { margin-bottom: 0; }
+  .price-item-row label { font-size: 12px; color: var(--text-light); }
+  .price-item-row input { padding: 6px 8px; border: 1.5px solid #D0DDE8; border-radius: 6px; font-size: 13px; outline: none; flex: 1; min-width: 60px; }
+  .price-item-row input[type=date] { -webkit-appearance: none; }
+  .add-item-btn { background: #EBF7FC; color: var(--sea); border: none; padding: 9px 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; width: 100%; margin-top: 4px; }
+  .periodo-tag { display: inline-block; background: #E0F4FB; color: var(--sea); padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; margin-right: 4px; }
 
   /* TOOLTIP */
   .tooltip-overlay { display: none; position: fixed; inset: 0; background: rgba(0,30,60,0.5); z-index: 250; align-items: center; justify-content: center; padding: 30px; }
@@ -282,6 +290,32 @@
     <button class="btn-danger" id="resetDataBtn">🗑️ Azzera prenotazioni della data</button>
     <button class="btn-danger" id="resetAllBtn">🗑️ Azzera TUTTE le prenotazioni</button>
   </div>
+  <!-- ATTREZZATURE -->
+  <div class="admin-section">
+    <div class="admin-section-title">🏖️ Attrezzature & Prezzi Base</div>
+    <div style="font-size:12px;color:var(--text-light);margin-bottom:10px">Prezzo giornaliero per unità. I moltiplicatori si applicano sopra.</div>
+    <div id="attrConfig"></div>
+    <button class="add-item-btn" id="addAttrBtn">+ Aggiungi Attrezzatura</button>
+  </div>
+
+  <!-- PERIODI -->
+  <div class="admin-section">
+    <div class="admin-section-title">📅 Periodi & Moltiplicatori</div>
+    <div style="font-size:12px;color:var(--text-light);margin-bottom:10px">Definisci le stagioni e il loro moltiplicatore sul prezzo base.</div>
+    <div id="periodiConfig"></div>
+    <button class="add-item-btn" id="addPeriodoBtn">+ Aggiungi Periodo</button>
+  </div>
+
+  <!-- WEEKEND -->
+  <div class="admin-section">
+    <div class="admin-section-title">📆 Moltiplicatore Weekend</div>
+    <div style="font-size:12px;color:var(--text-light);margin-bottom:10px">Sabato e domenica costano di più. Es. 1.2 = +20%</div>
+    <div class="config-row">
+      <label>Moltiplicatore Sab/Dom</label>
+      <input type="number" id="cfgWeekend" step="0.05" min="1" max="3" value="1.2" style="width:90px">
+    </div>
+  </div>
+
   <div class="admin-section">
     <button class="btn-save" id="saveConfigBtn">💾 Salva Configurazione</button>
   </div>
@@ -721,7 +755,71 @@ function renderConfigForm() {
   document.getElementById('cfgEmail').value = config.emailGestore || '';
   document.getElementById('cfgWhatsapp').value = config.whatsapp || '';
   document.getElementById('cfgPin').value = config.pin || '1234';
+  document.getElementById('cfgWeekend').value = config.moltiplicatoreWeekend || 1.2;
   renderRowsConfig();
+  renderAttrConfig();
+  renderPeriodiConfig();
+}
+
+function renderAttrConfig() {
+  var attrezzature = config.attrezzature || [];
+  var cont = document.getElementById('attrConfig');
+  if (!cont) return;
+  cont.innerHTML = '';
+  attrezzature.forEach(function(attr, i) {
+    var item = document.createElement('div'); item.className = 'price-item';
+    var r1 = document.createElement('div'); r1.className = 'price-item-row';
+    var l1 = document.createElement('label'); l1.textContent = 'Icona';
+    var iIco = document.createElement('input'); iIco.type='text'; iIco.id='atIco_'+i; iIco.value=attr.icona||''; iIco.style.width='50px';
+    var l2 = document.createElement('label'); l2.textContent = 'Nome';
+    var iNome = document.createElement('input'); iNome.type='text'; iNome.id='atNome_'+i; iNome.value=attr.nome||''; iNome.style.flex='2';
+    var l3 = document.createElement('label'); l3.textContent = '€/giorno';
+    var iPrezzo = document.createElement('input'); iPrezzo.type='number'; iPrezzo.id='atPrezzo_'+i; iPrezzo.value=attr.prezzoBase||0; iPrezzo.step='0.5'; iPrezzo.min='0'; iPrezzo.style.width='70px';
+    var btnR = document.createElement('button'); btnR.className='remove-row-btn'; btnR.textContent='✕';
+    btnR.onclick = (function(idx){ return function(){ config.attrezzature.splice(idx,1); renderAttrConfig(); }; })(i);
+    r1.appendChild(l1); r1.appendChild(iIco); r1.appendChild(l2); r1.appendChild(iNome);
+    r1.appendChild(l3); r1.appendChild(iPrezzo); r1.appendChild(btnR);
+    item.appendChild(r1);
+    cont.appendChild(item);
+  });
+  var addBtn = document.getElementById('addAttrBtn');
+  if (addBtn) addBtn.onclick = function() {
+    if (!config.attrezzature) config.attrezzature = [];
+    config.attrezzature.push({id:'attr'+Date.now(), nome:'Nuova', prezzoBase:5, icona:'🏖️'});
+    renderAttrConfig();
+  };
+}
+
+function renderPeriodiConfig() {
+  var periodi = config.periodi || [];
+  var cont = document.getElementById('periodiConfig');
+  if (!cont) return;
+  cont.innerHTML = '';
+  periodi.forEach(function(periodo, i) {
+    var item = document.createElement('div'); item.className = 'price-item';
+    var r1 = document.createElement('div'); r1.className = 'price-item-row';
+    var l1 = document.createElement('label'); l1.textContent = 'Nome';
+    var iNome = document.createElement('input'); iNome.type='text'; iNome.id='pNome_'+i; iNome.value=periodo.nome||''; iNome.style.flex='2';
+    var l4 = document.createElement('label'); l4.textContent = 'Moltipl.';
+    var iMol = document.createElement('input'); iMol.type='number'; iMol.id='pMol_'+i; iMol.value=periodo.moltiplicatore||1; iMol.step='0.05'; iMol.min='0.5'; iMol.max='5'; iMol.style.width='70px';
+    var btnR = document.createElement('button'); btnR.className='remove-row-btn'; btnR.textContent='✕';
+    btnR.onclick = (function(idx){ return function(){ config.periodi.splice(idx,1); renderPeriodiConfig(); }; })(i);
+    r1.appendChild(l1); r1.appendChild(iNome); r1.appendChild(l4); r1.appendChild(iMol); r1.appendChild(btnR);
+    var r2 = document.createElement('div'); r2.className = 'price-item-row';
+    var l2 = document.createElement('label'); l2.textContent = 'Dal (MM-GG)';
+    var iDal = document.createElement('input'); iDal.type='text'; iDal.id='pDal_'+i; iDal.value=periodo.dataInizio||''; iDal.placeholder='06-01'; iDal.style.width='80px';
+    var l3 = document.createElement('label'); l3.textContent = 'Al (MM-GG)';
+    var iAl = document.createElement('input'); iAl.type='text'; iAl.id='pAl_'+i; iAl.value=periodo.dataFine||''; iAl.placeholder='06-30'; iAl.style.width='80px';
+    r2.appendChild(l2); r2.appendChild(iDal); r2.appendChild(l3); r2.appendChild(iAl);
+    item.appendChild(r1); item.appendChild(r2);
+    cont.appendChild(item);
+  });
+  var addBtn = document.getElementById('addPeriodoBtn');
+  if (addBtn) addBtn.onclick = function() {
+    if (!config.periodi) config.periodi = [];
+    config.periodi.push({nome:'Nuovo periodo', dataInizio:'06-01', dataFine:'06-30', moltiplicatore:1.0});
+    renderPeriodiConfig();
+  };
 }
 
 function renderRowsConfig() {
@@ -729,14 +827,16 @@ function renderRowsConfig() {
   var html = '';
   rows.forEach(function(row, i) {
     var z = row.zona || 'normale';
+    var mol = row.moltiplicatore || 1.0;
     html += '<div class="row-config-item">' +
-      '<label>Fila</label><input type="text" maxlength="3" value="' + row.name + '" id="rName_'+i+'" style="width:44px">' +
-      '<label>Posti</label><input type="number" min="1" max="30" value="' + row.count + '" id="rCount_'+i+'" style="width:52px">' +
+      '<label>Fila</label><input type="text" maxlength="3" value="' + row.name + '" id="rName_'+i+'" style="width:40px">' +
+      '<label>Posti</label><input type="number" min="1" max="30" value="' + row.count + '" id="rCount_'+i+'" style="width:48px">' +
       '<label>Zona</label>' +
       '<select id="rZona_'+i+'">' +
       '<option value="normale"'+(z==='normale'?' selected':'')+'>🌊 Norm.</option>' +
       '<option value="family"'+(z==='family'?' selected':'')+'>👨‍👩‍👧 Family</option>' +
       '</select>' +
+      '<label>x</label><input type="number" min="0.5" max="5" step="0.05" value="'+mol.toFixed(2)+'" id="rMol_'+i+'" style="width:58px" title="Moltiplicatore fila">' +
       '<button class="remove-row-btn" data-idx="'+i+'">✕</button>' +
       '</div>';
   });
@@ -759,13 +859,36 @@ async function saveConfig() {
     var nm = (document.getElementById('rName_'+i).value||'').trim();
     var ct = parseInt(document.getElementById('rCount_'+i).value)||8;
     var zon = document.getElementById('rZona_'+i).value||'normale';
-    if (nm) rows.push({name:nm,count:ct,zona:zon});
+    var mol = parseFloat(document.getElementById('rMol_'+i) ? document.getElementById('rMol_'+i).value : 1) || 1.0;
+    if (nm) rows.push({name:nm,count:ct,zona:zon,moltiplicatore:mol});
+  }
+  // attrezzature
+  var attrezzature = [];
+  var na = (config.attrezzature||[]).length;
+  for (var ia=0; ia<na; ia++) {
+    var aIco = (document.getElementById('atIco_'+ia) ? document.getElementById('atIco_'+ia).value : '');
+    var aNome = (document.getElementById('atNome_'+ia) ? document.getElementById('atNome_'+ia).value : '').trim();
+    var aPrezzo = parseFloat(document.getElementById('atPrezzo_'+ia) ? document.getElementById('atPrezzo_'+ia).value : 0)||0;
+    if (aNome) attrezzature.push({id:config.attrezzature[ia].id||('attr'+ia), nome:aNome, prezzoBase:aPrezzo, icona:aIco});
+  }
+  // periodi
+  var periodi = [];
+  var np = (config.periodi||[]).length;
+  for (var ip=0; ip<np; ip++) {
+    var pNome = (document.getElementById('pNome_'+ip) ? document.getElementById('pNome_'+ip).value : '').trim();
+    var pDal = (document.getElementById('pDal_'+ip) ? document.getElementById('pDal_'+ip).value : '').trim();
+    var pAl = (document.getElementById('pAl_'+ip) ? document.getElementById('pAl_'+ip).value : '').trim();
+    var pMol = parseFloat(document.getElementById('pMol_'+ip) ? document.getElementById('pMol_'+ip).value : 1)||1;
+    if (pNome) periodi.push({nome:pNome, dataInizio:pDal, dataFine:pAl, moltiplicatore:pMol});
   }
   config.nomeLido = (document.getElementById('cfgNomeLido').value||'').trim()||'Lido';
   config.emailGestore = (document.getElementById('cfgEmail').value||'').trim();
   config.whatsapp = (document.getElementById('cfgWhatsapp').value||'').trim();
   config.pin = (document.getElementById('cfgPin').value||'').trim()||'1234';
+  config.moltiplicatoreWeekend = parseFloat(document.getElementById('cfgWeekend').value)||1.2;
   config.rows = rows;
+  config.attrezzature = attrezzature;
+  config.periodi = periodi;
   try {
     await setDoc(doc(db,'config','lido'), config);
     document.getElementById('headerTitle').textContent = '🏖️ ' + config.nomeLido;

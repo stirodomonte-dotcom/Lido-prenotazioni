@@ -9,14 +9,10 @@
 <meta name="theme-color" content="#0077B6">
 <title>Lido Prenotazioni</title>
 <style>
-:root {
-  --sea:#0077B6;--sand:#F4E0B5;--text:#1A1A2E;--text-light:#5A6A7A;
-  --free:#48CAE4;--booked:#E76F51;--occupied:#B5451B;--family:#7B61FF;
-  --selected:#F4D35E;--radius:10px;--shadow:0 2px 12px rgba(0,119,182,0.13);
-}
+:root{--sea:#0077B6;--sand:#F4E0B5;--text:#1A1A2E;--text-light:#5A6A7A;--free:#48CAE4;--booked:#E76F51;--occupied:#B5451B;--family:#7B61FF;--selected:#F4D35E;--green:#2D9D78;--radius:10px;--shadow:0 2px 12px rgba(0,119,182,0.13)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#EBF7FC;color:var(--text);min-height:100vh}
-.header{background:var(--sea);color:white;padding:14px 18px 12px;box-shadow:0 2px 8px rgba(0,0,0,0.18)}
+.header{background:var(--sea);color:white;padding:14px 18px 12px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
 .header-title{font-size:18px;font-weight:800}
 .header-sub{font-size:12px;opacity:.75;margin-top:2px}
 .main{padding:16px}
@@ -24,10 +20,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .spinner{width:40px;height:40px;border:4px solid #D0DDE8;border-top-color:var(--sea);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{font-size:14px;color:var(--text-light)}
-.date-bar{background:white;border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px}
+.date-bar{background:white;border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .date-bar-label{font-size:12px;font-weight:700;color:var(--text-light);white-space:nowrap}
-.date-bar input[type=date]{flex:1;padding:9px 12px;border:1.5px solid #D0DDE8;border-radius:8px;font-size:15px;font-weight:700;color:var(--sea);outline:none;-webkit-appearance:none;background:#F7FAFC}
+.date-bar input[type=date]{flex:1;min-width:120px;padding:9px 12px;border:1.5px solid #D0DDE8;border-radius:8px;font-size:14px;font-weight:700;color:var(--sea);outline:none;-webkit-appearance:none;background:#F7FAFC}
 .date-today-btn{background:var(--sea);color:white;border:none;padding:9px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+.date-range-bar{background:white;border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.date-range-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.date-range-row:last-child{margin-bottom:0}
+.date-range-label{font-size:12px;font-weight:700;color:var(--text-light);width:60px;flex-shrink:0}
+.date-range-row input[type=date]{flex:1;padding:9px 12px;border:1.5px solid #D0DDE8;border-radius:8px;font-size:14px;font-weight:700;color:var(--sea);outline:none;-webkit-appearance:none;background:#F7FAFC}
+.giorni-badge{background:#E0F4FB;color:var(--sea);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;text-align:center}
 .zona-selector{display:flex;gap:10px;margin-bottom:14px}
 .zona-btn{flex:1;padding:11px 8px;border-radius:12px;border:2px solid #D0DDE8;background:white;font-size:13px;font-weight:700;color:var(--text-light);cursor:pointer;text-align:center}
 .zona-btn.active-normal{background:var(--sea);border-color:var(--sea);color:white}
@@ -54,6 +56,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .ombrellone.occupied{background:var(--occupied);color:white;cursor:not-allowed}
 .ombrellone.selected{background:var(--selected);color:var(--text);border-color:#E8B500;box-shadow:0 0 0 3px rgba(244,211,94,.35)}
 .ombrellone.disabled{background:#D0D8E0;cursor:default}
+.ombrellone.partial{background:#F4A261;color:white;cursor:not-allowed}
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,30,60,.55);z-index:200;padding:20px;align-items:flex-end;justify-content:center}
 .modal-overlay.open{display:flex}
 .modal{background:white;border-radius:18px 18px 14px 14px;width:100%;max-width:460px;padding:24px 20px 28px;box-shadow:0 -4px 32px rgba(0,0,0,.18);animation:slideUp .25s ease;max-height:92vh;overflow-y:auto}
@@ -67,11 +70,24 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .field label{display:block;font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
 .field input{width:100%;padding:12px 14px;border:1.5px solid #D0DDE8;border-radius:10px;font-size:16px;color:var(--text);background:#F7FAFC;outline:none;-webkit-appearance:none}
 .field input:focus{border-color:var(--sea);background:white}
-.field-date-display{background:#E8F4FB;border-radius:10px;padding:12px 14px;font-size:15px;font-weight:700;color:var(--sea)}
-.btn-prenota{width:100%;background:var(--sea);color:white;border:none;padding:15px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px}
-.btn-prenota.family-mode{background:var(--family)}
-.btn-prenota:disabled{opacity:.6;cursor:not-allowed}
-.btn-annulla{width:100%;background:none;color:var(--text-light);border:none;padding:12px;font-size:14px;cursor:pointer;margin-top:4px}
+.field-display{background:#E8F4FB;border-radius:10px;padding:12px 14px;font-size:15px;font-weight:700;color:var(--sea)}
+/* ATTREZZATURE */
+.attrezzature-box{background:#F7FAFC;border-radius:12px;padding:14px;margin-bottom:14px}
+.attr-title{font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.attr-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #EEF2F6}
+.attr-item:last-child{border-bottom:none}
+.attr-name{font-size:14px;font-weight:600;color:var(--text)}
+.attr-price{font-size:12px;color:var(--text-light)}
+.attr-qty{display:flex;align-items:center;gap:10px}
+.attr-qty button{width:32px;height:32px;border-radius:50%;border:none;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.btn-minus{background:#EEF2F6;color:var(--text)}
+.btn-plus{background:var(--sea);color:white}
+.attr-qty-num{font-size:16px;font-weight:800;width:24px;text-align:center;color:var(--text)}
+.totale-box{background:var(--sand);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.totale-label{font-size:12px;color:var(--text-light);margin-bottom:4px}
+.totale-value{font-size:28px;font-weight:800;color:var(--sea)}
+.totale-detail{font-size:11px;color:var(--text-light);margin-top:4px}
+/* CONFERMA */
 .conf-box{text-align:center;padding:8px 0 4px}
 .conf-icon{font-size:52px;margin-bottom:10px}
 .conf-title{font-size:20px;font-weight:800;color:var(--sea);margin-bottom:6px}
@@ -82,7 +98,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .codice-info{font-size:12px;color:var(--text-light);margin-top:6px;line-height:1.6}
 .det-box{font-size:14px;color:var(--text);margin-bottom:18px;line-height:1.8;text-align:left;background:#F7FAFC;border-radius:10px;padding:14px 16px}
 .btn-blu{display:block;width:100%;background:var(--sea);color:white;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;text-decoration:none;text-align:center}
-.btn-verde{display:block;width:100%;background:#2D9D78;color:white;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;text-align:center}
+.btn-verde{display:block;width:100%;background:var(--green);color:white;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;text-align:center;text-decoration:none}
+.btn-prenota{width:100%;background:var(--sea);color:white;border:none;padding:15px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px}
+.btn-prenota.family-mode{background:var(--family)}
+.btn-prenota:disabled{opacity:.6;cursor:not-allowed}
+.btn-annulla{width:100%;background:none;color:var(--text-light);border:none;padding:12px;font-size:14px;cursor:pointer;margin-top:4px}
 .btn-chiudi{width:100%;background:#EBF7FC;color:var(--sea);border:none;padding:13px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer}
 .empty-state{text-align:center;padding:40px 20px;color:var(--text-light);font-size:14px}
 .empty-icon{font-size:44px;margin-bottom:10px}
@@ -94,14 +114,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 <body>
 <div class="header">
   <div class="header-title" id="headerTitle">🌊 Prenota il tuo Ombrellone</div>
-  <div class="header-sub">Seleziona data e posto</div>
+  <div class="header-sub">Seleziona date e posto</div>
 </div>
-<div class="main">
-  <div id="appContent">
-    <div class="loading-screen">
-      <div class="spinner"></div>
-      <div class="loading-text">Caricamento disponibilita...</div>
-    </div>
+<div class="main" id="appContent">
+  <div class="loading-screen">
+    <div class="spinner"></div>
+    <div class="loading-text">Caricamento...</div>
   </div>
 </div>
 <div class="modal-overlay" id="modalOverlay">
@@ -111,7 +129,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCJ4vGsoBwtf8tv5Bvj4s17UX2sqUl-ExA",
@@ -121,22 +139,37 @@ const firebaseConfig = {
   messagingSenderId: "887337288477",
   appId: "1:887337288477:web:a0531335b5150d1f0917f4"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // ===== STATO =====
 var config = {
-  nomeLido: 'Lido Prenotazioni', emailGestore: '', whatsapp: '', pin: '1234',
-  rows: [
-    {name:'A',count:8,zona:'normale'},{name:'B',count:8,zona:'normale'},
-    {name:'C',count:8,zona:'family'},{name:'D',count:6,zona:'family'}
-  ]
+  nomeLido:'Lido Prenotazioni', emailGestore:'', whatsapp:'', pin:'1234',
+  rows:[
+    {name:'A',count:8,zona:'normale',moltiplicatore:1.5},
+    {name:'B',count:8,zona:'normale',moltiplicatore:1.2},
+    {name:'C',count:8,zona:'family',moltiplicatore:1.0},
+    {name:'D',count:6,zona:'family',moltiplicatore:1.0}
+  ],
+  attrezzature:[
+    {id:'omb',nome:'Ombrellone',prezzoBase:8,icona:'⛱️'},
+    {id:'lett',nome:'Lettino',prezzoBase:5,icona:'🛏️'},
+    {id:'sdraio',nome:'Sdraio',prezzoBase:3,icona:'🪑'}
+  ],
+  periodi:[
+    {nome:'Bassa stagione',dataInizio:'06-01',dataFine:'06-30',moltiplicatore:1.0},
+    {nome:'Alta stagione',dataInizio:'07-01',dataFine:'07-31',moltiplicatore:1.2},
+    {nome:'Picco estate',dataInizio:'08-01',dataFine:'08-31',moltiplicatore:1.5}
+  ],
+  moltiplicatoreWeekend:1.2
 };
-var prenotazioniData = {};
+
+var prenotazioniMultiData = {};  // { "A-1": Set di date occupate }
 var zonaAttiva = 'normale';
-var mappaData = '';
+var dataInizio = '';
+var dataFine = '';
 var selectedPostazione = null;
+var qtaAttr = {};  // { id: quantita }
 var unsub = null;
 
 // ===== UTILS =====
@@ -147,101 +180,171 @@ function todayStr() {
 function formatIT(str) {
   if (!str) return '';
   var p = str.split('-');
-  return p[2] + '/' + p[1] + '/' + p[0];
+  return p[2]+'/'+p[1]+'/'+p[0];
 }
 function showToast(msg) {
   var t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast show';
-  setTimeout(function(){ t.className = 'toast'; }, 2800);
+  setTimeout(function(){ t.className='toast'; }, 2800);
 }
 function generaCodice() {
   var chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
   var code = '';
-  for (var i = 0; i < 5; i++) code += chars.charAt(Math.floor(Math.random()*chars.length));
+  for (var i=0; i<5; i++) code += chars.charAt(Math.floor(Math.random()*chars.length));
   return code;
 }
 
-// ===== BARCODE Code128 nativo =====
-function drawBarcode(canvas, text) {
-  var CHARS = ' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
-  var PAT = ["11011001100","11001101100","11001100110","10010011000","10010001100","10001001100","10011001000","10011000100","10001100100","11001001000","11001000100","11000100100","10110011100","10011011100","10011001110","10111001100","10011101100","10011100110","11001110010","11001011100","11001001110","11011100100","11001110100","11101101110","11101001100","11100101100","11100100110","11101100100","11100110100","11100110010","11011011000","11011000110","11000110110","10100011000","10001011000","10001000110","10110001000","10001101000","10001100010","11010001000","11000101000","11000100010","10110111000","10110001110","10001101110","10111011000","10111000110","10001110110","11101110110","11010001110","11000101110","11011101000","11011100010","11011101110","11101011000","11101000110","11100010110","11101101000","11101100010","11100011010","11101111010","11001000010","11110001010","10100110000","10100001100","10010110000","10010000110","10000101100","10000100110","10110010000","10110000100","10011010000","10011000010","10000110100","10000110010","11000010010","11001010000","11110111010","11000010100","10001111010","10100111100","10010111100","10010011110","10111100100","10011110100","10011110010","11110100100","11110010100","11110010010","11011011110","11011110110","11110110110","10101111000","10100011110","10001011110","10111101000","10111100010","11110101000","11110100010","10111011110","10111101110","11101011110","11110101110","11010000100","11010010000","11010011100","1100011101011"];
-  var codes = [104];
-  for (var i = 0; i < text.length; i++) {
-    var idx = CHARS.indexOf(text[i]);
-    codes.push(idx < 0 ? 0 : idx);
+// Calcola tutti i giorni tra due date
+function getDateRange(inizio, fine) {
+  var dates = [];
+  var cur = new Date(inizio + 'T12:00:00');
+  var end = new Date(fine + 'T12:00:00');
+  while (cur <= end) {
+    var y = cur.getFullYear();
+    var m = ('0'+(cur.getMonth()+1)).slice(-2);
+    var d = ('0'+cur.getDate()).slice(-2);
+    dates.push(y+'-'+m+'-'+d);
+    cur.setDate(cur.getDate()+1);
   }
-  var chk = codes[0];
-  for (var j = 1; j < codes.length; j++) chk += j * codes[j];
-  codes.push(chk % 103);
-  codes.push(106);
-  var bars = '';
-  for (var k = 0; k < codes.length; k++) bars += PAT[codes[k]];
-  var bw = 3, bh = 80, mg = 10, fs = 16;
-  var w = bars.length * bw + mg * 2;
-  var h = bh + mg * 2 + fs + 4;
-  canvas.width = w; canvas.height = h;
-  var ctx = canvas.getContext('2d');
-  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0,0,w,h);
-  ctx.fillStyle = '#005F92';
-  for (var bi = 0; bi < bars.length; bi++) {
-    if (bars[bi] === '1') ctx.fillRect(mg + bi*bw, mg, bw, bh);
+  return dates;
+}
+
+function numGiorni(inizio, fine) {
+  if (!inizio || !fine) return 0;
+  var a = new Date(inizio+'T12:00:00');
+  var b = new Date(fine+'T12:00:00');
+  var diff = Math.round((b-a)/(1000*60*60*24));
+  return diff < 0 ? 0 : diff + 1;
+}
+
+// ===== CALCOLO PREZZI =====
+function getMoltiplicatorePeriodo(dataStr) {
+  var periodi = config.periodi || [];
+  var mmdd = dataStr.slice(5); // MM-DD
+  for (var i=0; i<periodi.length; i++) {
+    var p = periodi[i];
+    if (mmdd >= p.dataInizio && mmdd <= p.dataFine) return p.moltiplicatore;
   }
-  ctx.fillStyle = '#1A1A2E';
-  ctx.font = 'bold ' + fs + 'px monospace';
-  ctx.textAlign = 'center';
-  ctx.fillText(text, w/2, bh + mg + fs);
-  return canvas;
+  return 1.0;
+}
+
+function getMoltiplicatoreGiorno(dataStr) {
+  var d = new Date(dataStr+'T12:00:00');
+  var dow = d.getDay(); // 0=dom, 6=sab
+  if (dow === 0 || dow === 6) return config.moltiplicatoreWeekend || 1.2;
+  return 1.0;
+}
+
+function getMoltiplicatoreFila(nomeFila) {
+  var rows = config.rows || [];
+  for (var i=0; i<rows.length; i++) {
+    if (rows[i].name === nomeFila) return rows[i].moltiplicatore || 1.0;
+  }
+  return 1.0;
+}
+
+function calcolaTotale(posto, dates) {
+  if (!dates || !dates.length) return 0;
+  var fila = posto.split('-')[0];
+  var molFila = getMoltiplicatoreFila(fila);
+  var totale = 0;
+  for (var di=0; di<dates.length; di++) {
+    var data = dates[di];
+    var molPeriodo = getMoltiplicatorePeriodo(data);
+    var molGiorno = getMoltiplicatoreGiorno(data);
+    var attrezzature = config.attrezzature || [];
+    for (var ai=0; ai<attrezzature.length; ai++) {
+      var attr = attrezzature[ai];
+      var qty = qtaAttr[attr.id] || 0;
+      if (qty > 0) {
+        totale += attr.prezzoBase * qty * molFila * molPeriodo * molGiorno;
+      }
+    }
+  }
+  return Math.round(totale * 100) / 100;
+}
+
+function formatEuro(val) {
+  return val.toFixed(2).replace('.', ',') + ' €';
 }
 
 // ===== INIT =====
 async function init() {
-  mappaData = todayStr();
-  // mostra app subito con config default
+  dataInizio = todayStr();
+  dataFine = todayStr();
+  // mostra subito
   renderApp();
-  // carica config Firebase in background
+  // carica config Firebase
   try {
-    var snap = await getDoc(doc(db, 'config', 'lido'));
+    var snap = await getDoc(doc(db,'config','lido'));
     if (snap.exists()) {
       config = snap.data();
+      // init qtaAttr da config
+      initQtaAttr();
+      document.getElementById('headerTitle').textContent = '🌊 ' + config.nomeLido;
     } else {
       setDoc(doc(db,'config','lido'), config).catch(function(){});
     }
-    document.getElementById('headerTitle').textContent = '🌊 ' + config.nomeLido;
-    renderMap();
-  } catch(e) {}
-  // ascolta prenotazioni
-  listenPrenotazioni(mappaData);
+    initQtaAttr();
+    renderApp();
+  } catch(e) { initQtaAttr(); }
 }
 
-function listenPrenotazioni(data) {
-  if (unsub) unsub();
-  unsub = onSnapshot(
-    query(collection(db,'prenotazioni'), where('data','==',data)),
-    function(snap) {
-      prenotazioniData = {};
-      snap.forEach(function(d){ var dd=d.data(); prenotazioniData[dd.posto]=dd; });
-      renderMap();
-    },
-    function(){ renderMap(); }
-  );
+function initQtaAttr() {
+  qtaAttr = {};
+  var attrezzature = config.attrezzature || [];
+  for (var i=0; i<attrezzature.length; i++) {
+    qtaAttr[attrezzature[i].id] = 0;
+  }
+  if (attrezzature.length > 0) qtaAttr[attrezzature[0].id] = 1; // ombrellone default 1
+}
+
+// ===== CARICA PRENOTAZIONI RANGE DATE =====
+async function loadPrenotazioniRange() {
+  if (!dataInizio || !dataFine) return;
+  var dates = getDateRange(dataInizio, dataFine);
+  prenotazioniMultiData = {};
+  try {
+    for (var i=0; i<dates.length; i++) {
+      var snap = await getDocs(query(collection(db,'prenotazioni'), where('data','==',dates[i])));
+      snap.forEach(function(d) {
+        var dd = d.data();
+        if (!prenotazioniMultiData[dd.posto]) prenotazioniMultiData[dd.posto] = [];
+        prenotazioniMultiData[dd.posto].push(dd.data);
+      });
+    }
+  } catch(e) {}
+  renderMap();
 }
 
 // ===== RENDER APP =====
 function renderApp() {
   var div = document.getElementById('appContent');
+  div.innerHTML = '';
 
-  // date bar
-  var dateBar = document.createElement('div');
-  dateBar.className = 'date-bar';
-  var lbl = document.createElement('div'); lbl.className='date-bar-label'; lbl.textContent='📅 Data';
-  var inp = document.createElement('input'); inp.type='date'; inp.id='mappaData'; inp.value=mappaData;
-  inp.onchange = function(){ mappaData=this.value; listenPrenotazioni(mappaData); };
-  var btn = document.createElement('button'); btn.className='date-today-btn'; btn.textContent='Oggi';
-  btn.onclick = function(){ mappaData=todayStr(); document.getElementById('mappaData').value=mappaData; listenPrenotazioni(mappaData); };
-  dateBar.appendChild(lbl); dateBar.appendChild(inp); dateBar.appendChild(btn);
+  // DATE RANGE BAR
+  var drBar = document.createElement('div'); drBar.className='date-range-bar';
 
-  // zona selector
+  var row1 = document.createElement('div'); row1.className='date-range-row';
+  var l1 = document.createElement('div'); l1.className='date-range-label'; l1.textContent='Dal';
+  var inp1 = document.createElement('input'); inp1.type='date'; inp1.id='inputDataIn'; inp1.value=dataInizio;
+  inp1.onchange = function(){ dataInizio=this.value; if(dataFine<dataInizio){dataFine=dataInizio; document.getElementById('inputDataFin').value=dataFine;} aggiornaGiorni(); loadPrenotazioniRange(); };
+  row1.appendChild(l1); row1.appendChild(inp1);
+
+  var row2 = document.createElement('div'); row2.className='date-range-row';
+  var l2 = document.createElement('div'); l2.className='date-range-label'; l2.textContent='Al';
+  var inp2 = document.createElement('input'); inp2.type='date'; inp2.id='inputDataFin'; inp2.value=dataFine;
+  inp2.onchange = function(){ dataFine=this.value; if(dataFine<dataInizio){dataFine=dataInizio; this.value=dataFine;} aggiornaGiorni(); loadPrenotazioniRange(); };
+  row2.appendChild(l2); row2.appendChild(inp2);
+
+  var giorniBadge = document.createElement('div'); giorniBadge.className='giorni-badge'; giorniBadge.id='giorniBadge';
+  var ng = numGiorni(dataInizio, dataFine);
+  giorniBadge.textContent = ng === 1 ? '1 giorno' : ng + ' giorni';
+
+  drBar.appendChild(row1); drBar.appendChild(row2); drBar.appendChild(giorniBadge);
+
+  // ZONA
   var zonaSel = document.createElement('div'); zonaSel.className='zona-selector';
   var znBtn = document.createElement('button'); znBtn.id='zonaBtnNormale'; znBtn.className='zona-btn active-normal'; znBtn.textContent='🌊 Normale';
   znBtn.onclick = function(){ setZona('normale'); };
@@ -249,27 +352,29 @@ function renderApp() {
   zfBtn.onclick = function(){ setZona('family'); };
   zonaSel.appendChild(znBtn); zonaSel.appendChild(zfBtn);
 
-  // legenda
+  // LEGENDA
   var leg = document.createElement('div'); leg.className='legenda';
-  leg.innerHTML = '<div class="leg-item"><div class="leg-dot" style="background:var(--free)"></div> Libero</div><div class="leg-item"><div class="leg-dot" style="background:var(--family)"></div> Family</div><div class="leg-item"><div class="leg-dot" style="background:var(--booked)"></div> Prenotato</div>';
+  leg.innerHTML='<div class="leg-item"><div class="leg-dot" style="background:var(--free)"></div> Libero</div><div class="leg-item"><div class="leg-dot" style="background:var(--family)"></div> Family</div><div class="leg-item"><div class="leg-dot" style="background:var(--booked)"></div> Occupato</div><div class="leg-item"><div class="leg-dot" style="background:#F4A261"></div> Parz. occupato</div>';
 
-  // map wrapper
   var mapW = document.createElement('div'); mapW.id='mapWrapper';
 
-  div.innerHTML = '';
-  div.appendChild(dateBar);
-  div.appendChild(zonaSel);
-  div.appendChild(leg);
-  div.appendChild(mapW);
-  renderMap();
+  div.appendChild(drBar); div.appendChild(zonaSel); div.appendChild(leg); div.appendChild(mapW);
+  loadPrenotazioniRange();
+}
+
+function aggiornaGiorni() {
+  var el = document.getElementById('giorniBadge');
+  if (!el) return;
+  var ng = numGiorni(dataInizio, dataFine);
+  el.textContent = ng === 1 ? '1 giorno' : ng + ' giorni';
 }
 
 function setZona(z) {
   zonaAttiva = z;
   var nb = document.getElementById('zonaBtnNormale');
   var fb = document.getElementById('zonaBtnFamily');
-  if (nb) nb.className = 'zona-btn' + (z==='normale' ? ' active-normal' : '');
-  if (fb) fb.className = 'zona-btn' + (z==='family' ? ' active-family' : '');
+  if (nb) nb.className = 'zona-btn' + (z==='normale'?' active-normal':'');
+  if (fb) fb.className = 'zona-btn' + (z==='family'?' active-family':'');
   renderMap();
 }
 
@@ -278,54 +383,59 @@ function renderMap() {
   var wrapper = document.getElementById('mapWrapper');
   if (!wrapper) return;
   wrapper.innerHTML = '';
-  var rows = (config.rows || []).filter(function(r){ return (r.zona||'normale')===zonaAttiva; });
+  var rows = (config.rows||[]).filter(function(r){ return (r.zona||'normale')===zonaAttiva; });
   if (!rows.length) {
-    wrapper.innerHTML = '<div class="empty-state"><div class="empty-icon">🌊</div>Nessuna fila per questa zona</div>';
+    wrapper.innerHTML='<div class="empty-state"><div class="empty-icon">🌊</div>Nessuna fila per questa zona</div>';
     return;
   }
+  var dates = getDateRange(dataInizio, dataFine);
+
   var lbl = document.createElement('div');
-  lbl.className = 'map-section-label ' + zonaAttiva;
-  lbl.textContent = zonaAttiva==='family' ? '👨‍👩‍👧 Zona Family' : '🌊 Zona Normale';
+  lbl.className='map-section-label '+zonaAttiva;
+  lbl.textContent = zonaAttiva==='family'?'👨‍👩‍👧 Zona Family':'🌊 Zona Normale';
   wrapper.appendChild(lbl);
 
   var cont = document.createElement('div'); cont.className='map-container';
   var info = document.createElement('div'); info.className='map-info';
-  info.textContent = 'Disponibilita per il ' + formatIT(mappaData);
+  var ng = numGiorni(dataInizio, dataFine);
+  info.textContent = ng===1 ? 'Disponibilita per il '+formatIT(dataInizio) : 'Disponibilita dal '+formatIT(dataInizio)+' al '+formatIT(dataFine);
   cont.appendChild(info);
 
   var grid = document.createElement('div'); grid.className='map-grid';
-  var maxC = 0; rows.forEach(function(r){ if(r.count>maxC) maxC=r.count; });
+  var maxC=0; rows.forEach(function(r){ if(r.count>maxC) maxC=r.count; });
 
-  // header numeri
   var hRow = document.createElement('div'); hRow.className='map-row';
   var sp = document.createElement('div'); sp.style.width='22px'; sp.style.flexShrink='0';
   hRow.appendChild(sp);
   for (var c=1; c<=maxC; c++) {
-    var cl = document.createElement('div'); cl.className='row-label'; cl.textContent=c;
+    var cl=document.createElement('div'); cl.className='row-label'; cl.textContent=c;
     hRow.appendChild(cl);
   }
   grid.appendChild(hRow);
 
   rows.forEach(function(row) {
-    var rowEl = document.createElement('div'); rowEl.className='map-row';
-    var rl = document.createElement('div'); rl.className='row-label'; rl.textContent=row.name;
+    var rowEl=document.createElement('div'); rowEl.className='map-row';
+    var rl=document.createElement('div'); rl.className='row-label'; rl.textContent=row.name;
     rowEl.appendChild(rl);
     for (var ci=1; ci<=row.count; ci++) {
-      var posto = row.name + '-' + ci;
-      var prenot = prenotazioniData[posto];
-      var div = document.createElement('div'); div.className='ombrellone';
+      var posto = row.name+'-'+ci;
+      var dateOccupate = prenotazioniMultiData[posto] || [];
+      var tuttiOccupati = dates.length > 0 && dateOccupate.length >= dates.length;
+      var parzOccupato = dateOccupate.length > 0 && !tuttiOccupati;
+      var div=document.createElement('div'); div.className='ombrellone';
+
       if (selectedPostazione===posto) {
         div.className+=' selected';
-        div.innerHTML = '<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>';
-      } else if (prenot && prenot.checkin) {
-        div.className+=' occupied';
-        div.innerHTML = '<div class="oi" style="font-size:16px;font-weight:900">✕</div><div class="on">'+row.name+ci+'</div><div class="oo">'+(prenot.checkinOra||'')+'</div>';
-      } else if (prenot) {
+        div.innerHTML='<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>';
+      } else if (tuttiOccupati) {
         div.className+=' booked';
-        div.innerHTML = '<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>';
+        div.innerHTML='<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>';
+      } else if (parzOccupato) {
+        div.className+=' partial';
+        div.innerHTML='<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>';
       } else {
-        div.className += (zonaAttiva==='family' ? ' free-family' : ' free');
-        div.innerHTML = '<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>';
+        div.className+=(zonaAttiva==='family'?' free-family':' free');
+        div.innerHTML='<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>';
         (function(p){ div.onclick=function(){ apriModal(p); }; })(posto);
       }
       rowEl.appendChild(div);
@@ -341,185 +451,266 @@ function renderMap() {
   wrapper.appendChild(cont);
 }
 
-// ===== MODAL =====
+// ===== MODAL PRENOTAZIONE =====
 function apriModal(posto) {
   selectedPostazione = posto;
   renderMap();
   var isFamily = zonaAttiva==='family';
+  var ng = numGiorni(dataInizio, dataFine);
   var modal = document.getElementById('modalContent');
-  modal.innerHTML = '';
+  modal.innerHTML='';
 
-  var title = document.createElement('div'); title.className='modal-title';
-  title.textContent = 'Prenota Ombrellone ' + posto.replace('-','');
-  var sub = document.createElement('div'); sub.className='modal-sub';
-  sub.textContent = 'Nessun pagamento richiesto ora';
-  var badge = document.createElement('span');
-  badge.className = 'zona-badge ' + (isFamily?'family':'normale');
-  badge.textContent = isFamily ? '👨‍👩‍👧 Zona Family' : '🌊 Zona Normale';
+  // titolo
+  var title=document.createElement('div'); title.className='modal-title';
+  title.textContent='Prenota Ombrellone '+posto.replace('-','');
+  var sub=document.createElement('div'); sub.className='modal-sub';
+  sub.textContent='Nessun pagamento richiesto ora';
+  var badge=document.createElement('span');
+  badge.className='zona-badge '+(isFamily?'family':'normale');
+  badge.textContent=isFamily?'👨‍👩‍👧 Zona Family':'🌊 Zona Normale';
+  modal.appendChild(title); modal.appendChild(sub); modal.appendChild(badge);
 
+  // date
+  var dateDisp=document.createElement('div'); dateDisp.className='field';
+  var dl=document.createElement('label'); dl.textContent='Periodo';
+  var dd=document.createElement('div'); dd.className='field-display';
+  dd.textContent = ng===1 ? '📅 '+formatIT(dataInizio) : '📅 '+formatIT(dataInizio)+' → '+formatIT(dataFine)+' ('+ng+' giorni)';
+  dateDisp.appendChild(dl); dateDisp.appendChild(dd);
+  modal.appendChild(dateDisp);
+
+  // attrezzature
+  var attrezzature = config.attrezzature || [];
+  if (attrezzature.length > 0) {
+    var attrBox=document.createElement('div'); attrBox.className='attrezzature-box';
+    var attrTitle=document.createElement('div'); attrTitle.className='attr-title'; attrTitle.textContent='Scegli le attrezzature';
+    attrBox.appendChild(attrTitle);
+    attrezzature.forEach(function(attr) {
+      var item=document.createElement('div'); item.className='attr-item';
+      var left=document.createElement('div');
+      var name=document.createElement('div'); name.className='attr-name'; name.textContent=attr.icona+' '+attr.nome;
+      var price=document.createElement('div'); price.className='attr-price'; price.textContent=formatEuro(attr.prezzoBase)+'/giorno';
+      left.appendChild(name); left.appendChild(price);
+      var qty=document.createElement('div'); qty.className='attr-qty';
+      var btnM=document.createElement('button'); btnM.className='btn-minus'; btnM.textContent='−';
+      var num=document.createElement('div'); num.className='attr-qty-num'; num.id='qty-'+attr.id; num.textContent=qtaAttr[attr.id]||0;
+      var btnP=document.createElement('button'); btnP.className='btn-plus'; btnP.textContent='+';
+      (function(a, numEl) {
+        btnM.onclick=function(){
+          if ((qtaAttr[a.id]||0)>0) { qtaAttr[a.id]--; numEl.textContent=qtaAttr[a.id]; aggiornaTotale(posto); }
+        };
+        btnP.onclick=function(){
+          qtaAttr[a.id]=(qtaAttr[a.id]||0)+1; numEl.textContent=qtaAttr[a.id]; aggiornaTotale(posto);
+        };
+      })(attr, num);
+      qty.appendChild(btnM); qty.appendChild(num); qty.appendChild(btnP);
+      item.appendChild(left); item.appendChild(qty);
+      attrBox.appendChild(item);
+    });
+    modal.appendChild(attrBox);
+  }
+
+  // totale
+  var totBox=document.createElement('div'); totBox.className='totale-box'; totBox.id='totaleBox';
+  aggiornaBoxTotale(totBox, posto);
+  modal.appendChild(totBox);
+
+  // campi form
   function mkField(lbl, id, type, ph, ac) {
     var f=document.createElement('div'); f.className='field';
     var l=document.createElement('label'); l.textContent=lbl;
     var i=document.createElement('input'); i.type=type; i.id=id; i.placeholder=ph; i.autocomplete=ac||'';
     f.appendChild(l); f.appendChild(i); return f;
   }
+  modal.appendChild(mkField('Nome','fNome','text','Mario','given-name'));
+  modal.appendChild(mkField('Cognome','fCognome','text','Rossi','family-name'));
+  modal.appendChild(mkField('Cellulare','fTel','tel','+39 333 1234567','tel'));
+  modal.appendChild(mkField('La tua Email','fEmail','email','mario@email.com','email'));
 
-  var dateDisp = document.createElement('div'); dateDisp.className='field';
-  var dl = document.createElement('label'); dl.textContent='Data';
-  var dd = document.createElement('div'); dd.className='field-date-display'; dd.textContent='📅 ' + formatIT(mappaData);
-  dateDisp.appendChild(dl); dateDisp.appendChild(dd);
-
-  var fNome    = mkField('Nome','fNome','text','Mario','given-name');
-  var fCognome = mkField('Cognome','fCognome','text','Rossi','family-name');
-  var fTel     = mkField('Cellulare','fTel','tel','+39 333 1234567','tel');
-  var fEmail   = mkField('La tua Email','fEmail','email','mario@email.com','email');
-
-  var btnConf = document.createElement('button');
-  btnConf.className = 'btn-prenota' + (isFamily?' family-mode':'');
-  btnConf.textContent = 'Conferma Prenotazione';
-  btnConf.onclick = confermaPrenota;
-
-  var btnAnn = document.createElement('button');
-  btnAnn.className = 'btn-annulla';
-  btnAnn.textContent = 'Annulla';
-  btnAnn.onclick = chiudiModal;
-
-  modal.appendChild(title); modal.appendChild(sub); modal.appendChild(badge);
-  modal.appendChild(dateDisp); modal.appendChild(fNome); modal.appendChild(fCognome);
-  modal.appendChild(fTel); modal.appendChild(fEmail);
+  var btnConf=document.createElement('button');
+  btnConf.className='btn-prenota'+(isFamily?' family-mode':'');
+  btnConf.textContent='Conferma Prenotazione';
+  btnConf.onclick=confermaPrenota;
+  var btnAnn=document.createElement('button'); btnAnn.className='btn-annulla'; btnAnn.textContent='Annulla';
+  btnAnn.onclick=chiudiModal;
   modal.appendChild(btnConf); modal.appendChild(btnAnn);
 
-  document.getElementById('modalOverlay').className = 'modal-overlay open';
-  setTimeout(function(){ var el=document.getElementById('fNome'); if(el) el.focus(); }, 300);
+  document.getElementById('modalOverlay').className='modal-overlay open';
+  setTimeout(function(){ var el=document.getElementById('fNome'); if(el) el.focus(); },300);
+}
+
+function aggiornaBoxTotale(box, posto) {
+  if (!box) { box=document.getElementById('totaleBox'); }
+  if (!box) return;
+  var dates=getDateRange(dataInizio,dataFine);
+  var tot=calcolaTotale(posto||selectedPostazione, dates);
+  var ng=dates.length;
+  box.innerHTML='';
+  var lbl=document.createElement('div'); lbl.className='totale-label'; lbl.textContent='Totale stimato';
+  var val=document.createElement('div'); val.className='totale-value'; val.textContent=formatEuro(tot);
+  var det=document.createElement('div'); det.className='totale-detail'; det.textContent=ng+(ng===1?' giorno':' giorni')+' · prezzi indicativi, possono variare';
+  box.appendChild(lbl); box.appendChild(val); box.appendChild(det);
+}
+
+function aggiornaTotale(posto) {
+  aggiornaBoxTotale(null, posto);
 }
 
 function chiudiModal() {
-  document.getElementById('modalOverlay').className = 'modal-overlay';
-  selectedPostazione = null;
+  document.getElementById('modalOverlay').className='modal-overlay';
+  selectedPostazione=null;
   renderMap();
 }
 
 async function confermaPrenota() {
-  var nome    = (document.getElementById('fNome').value||'').trim();
-  var cognome = (document.getElementById('fCognome').value||'').trim();
-  var tel     = (document.getElementById('fTel').value||'').trim();
-  var email   = (document.getElementById('fEmail').value||'').trim();
-  var posto   = selectedPostazione;
-  var zona    = zonaAttiva;
-
+  var nome=(document.getElementById('fNome').value||'').trim();
+  var cognome=(document.getElementById('fCognome').value||'').trim();
+  var tel=(document.getElementById('fTel').value||'').trim();
+  var email=(document.getElementById('fEmail').value||'').trim();
+  var posto=selectedPostazione;
+  var zona=zonaAttiva;
   if (!nome||!cognome||!tel||!email) { showToast('Compila tutti i campi'); return; }
   if (!posto) { chiudiModal(); return; }
 
-  var btn = document.querySelector('#modalContent .btn-prenota');
+  var btn=document.querySelector('#modalContent .btn-prenota');
   if (btn) { btn.disabled=true; btn.textContent='Salvataggio...'; }
 
-  var codice = generaCodice();
-  var ts = new Date().toISOString();
+  var codice=generaCodice();
+  var ts=new Date().toISOString();
+  var dates=getDateRange(dataInizio,dataFine);
+  var totale=calcolaTotale(posto,dates);
+
+  // salva attrezzature scelte
+  var attrScelte=[];
+  var attrezzature=config.attrezzature||[];
+  for (var i=0; i<attrezzature.length; i++) {
+    if ((qtaAttr[attrezzature[i].id]||0)>0) {
+      attrScelte.push({id:attrezzature[i].id,nome:attrezzature[i].nome,qty:qtaAttr[attrezzature[i].id]});
+    }
+  }
+
   var prenotazione = {
-    codice:codice, nome:nome, cognome:cognome, tel:tel, email:email,
-    ts:ts, checkin:false, zona:zona, data:mappaData, posto:posto
+    codice:codice, nome:nome, cognome:cognome, tel:tel, email:email, ts:ts,
+    checkin:false, zona:zona, dataInizio:dataInizio, dataFine:dataFine,
+    data:dataInizio, posto:posto, totale:totale, attrezzature:attrScelte,
+    numGiorni:dates.length
   };
 
-  var tid = setTimeout(function(){
+  var tid=setTimeout(function(){
     showToast('Connessione lenta. Riprova.');
     if (btn) { btn.disabled=false; btn.textContent='Conferma Prenotazione'; }
   }, 12000);
 
   try {
-    await setDoc(doc(db,'prenotazioni', mappaData+'_'+posto), prenotazione);
+    // salva una prenotazione per ogni giorno del range
+    for (var di=0; di<dates.length; di++) {
+      var docId=dates[di]+'_'+posto;
+      await setDoc(doc(db,'prenotazioni',docId), Object.assign({}, prenotazione, {data:dates[di]}));
+    }
     clearTimeout(tid);
-    selectedPostazione = null;
-    mostraConferma(posto, codice, nome, cognome, tel, email, zona);
+    selectedPostazione=null;
+    mostraConferma(posto,codice,nome,cognome,tel,email,zona,totale,dates);
   } catch(e) {
     clearTimeout(tid);
-    showToast('Errore: ' + (e.code||'riprova'));
+    showToast('Errore: '+(e.code||'riprova'));
     if (btn) { btn.disabled=false; btn.textContent='Conferma Prenotazione'; }
   }
 }
 
-function mostraConferma(posto, codice, nome, cognome, tel, email, zona) {
-  var postazione = posto.replace('-','');
-  var ora = new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
-  var dataLabel = formatIT(mappaData);
-  var isFamily = zona==='family';
-  var zonaLabel = isFamily ? '👨‍👩‍👧 Zona Family' : '🌊 Zona Normale';
-  var emailGestore = (config && config.emailGestore) ? config.emailGestore : '';
+// ===== CONFERMA =====
+function mostraConferma(posto,codice,nome,cognome,tel,email,zona,totale,dates) {
+  var postazione=posto.replace('-','');
+  var ora=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
+  var isFamily=zona==='family';
+  var zonaLabel=isFamily?'👨‍👩‍👧 Zona Family':'🌊 Zona Normale';
+  var emailGestore=(config&&config.emailGestore)?config.emailGestore:'';
+  var ng=dates.length;
+  var periodoLabel=ng===1?formatIT(dates[0]):formatIT(dates[0])+' - '+formatIT(dates[dates.length-1]);
 
-  var modal = document.getElementById('modalContent');
-  modal.innerHTML = '';
+  var modal=document.getElementById('modalContent');
+  modal.innerHTML='';
 
-  var box = document.createElement('div'); box.className='conf-box';
-  box.innerHTML = '<div class="conf-icon">✅</div><div class="conf-title">Prenotazione Confermata!</div><div class="conf-sub">Mostra il barcode alla cassa</div>';
+  var box=document.createElement('div'); box.className='conf-box';
+  box.innerHTML='<div class="conf-icon">✅</div><div class="conf-title">Prenotazione Confermata!</div><div class="conf-sub">Mostra il barcode alla cassa</div>';
   modal.appendChild(box);
 
-  // codice box con barcode canvas
-  var codBox = document.createElement('div'); codBox.className='codice-box';
-  var codLbl = document.createElement('div'); codLbl.className='codice-label'; codLbl.textContent='Il tuo Codice';
-  var codVal = document.createElement('div'); codVal.className='codice-value'; codVal.textContent=codice;
-  var bcWrap = document.createElement('div'); bcWrap.style.cssText='margin:14px 0 6px;overflow-x:auto;text-align:center';
-  var bcCanvas = document.createElement('canvas'); bcCanvas.id='barcodeCanvas';
+  var codBox=document.createElement('div'); codBox.className='codice-box';
+  var codLbl=document.createElement('div'); codLbl.className='codice-label'; codLbl.textContent='Il tuo Codice';
+  var codVal=document.createElement('div'); codVal.className='codice-value'; codVal.textContent=codice;
+  var bcWrap=document.createElement('div'); bcWrap.style.cssText='margin:14px 0 6px;overflow-x:auto;text-align:center';
+  var bcCanvas=document.createElement('canvas'); bcCanvas.id='barcodeCanvas';
   bcWrap.appendChild(bcCanvas);
-  var codInfo = document.createElement('div'); codInfo.className='codice-info';
-  codInfo.innerHTML = '⛱️ Ombrellone ' + postazione + ' &middot; ' + zonaLabel + '<br>📅 ' + dataLabel;
+  var codInfo=document.createElement('div'); codInfo.className='codice-info';
+  codInfo.innerHTML='⛱️ Ombrellone '+postazione+' &middot; '+zonaLabel+'<br>📅 '+periodoLabel+'<br>💰 Totale: <strong>'+formatEuro(totale)+'</strong>';
   codBox.appendChild(codLbl); codBox.appendChild(codVal); codBox.appendChild(bcWrap); codBox.appendChild(codInfo);
   modal.appendChild(codBox);
 
-  // dettagli
-  var det = document.createElement('div'); det.className='det-box';
-  det.innerHTML = '👤 <strong>' + nome + ' ' + cognome + '</strong><br>📱 ' + tel + '<br>✉️ ' + email + '<br>⏰ Prenotato alle ' + ora;
+  var det=document.createElement('div'); det.className='det-box';
+  det.innerHTML='👤 <strong>'+nome+' '+cognome+'</strong><br>📱 '+tel+'<br>✉️ '+email+'<br>⏰ Prenotato alle '+ora;
   modal.appendChild(det);
 
-  // btn salva barcode
-  var btnSalva = document.createElement('button'); btnSalva.className='btn-blu';
+  var btnSalva=document.createElement('button'); btnSalva.className='btn-blu';
   btnSalva.textContent='📥 Salva Barcode (PNG)';
-  btnSalva.onclick = function() { scaricaBarcode(codice, nome, cognome, dataLabel, postazione); };
+  (function(c,n,cog,pl,post){ btnSalva.onclick=function(){ scaricaBarcode(c,n,cog,pl,post); }; })(codice,nome,cognome,periodoLabel,postazione);
   modal.appendChild(btnSalva);
 
-  // btn email gestore
   if (emailGestore) {
-    var subject = 'Prenotazione ' + codice + ' - Ombrellone ' + postazione + ' - ' + dataLabel;
-    var body = 'Nuova prenotazione!\n\nCodice: ' + codice + '\nData: ' + dataLabel + '\nOmbrellone: ' + postazione + '\nZona: ' + (isFamily?'Family':'Normale') + '\nNome: ' + nome + ' ' + cognome + '\nCellulare: ' + tel + '\nEmail: ' + email + '\nOra: ' + ora;
-    var btnEmail = document.createElement('a'); btnEmail.className='btn-verde';
-    btnEmail.href = 'mailto:' + emailGestore + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    var subject='Prenotazione '+codice+' - Omb. '+postazione+' - '+periodoLabel;
+    var body='Nuova prenotazione!\n\nCodice: '+codice+'\nPeriodo: '+periodoLabel+' ('+ng+' giorni)\nOmbrellone: '+postazione+'\nZona: '+(isFamily?'Family':'Normale')+'\nNome: '+nome+' '+cognome+'\nCellulare: '+tel+'\nEmail: '+email+'\nTotale stimato: '+formatEuro(totale)+'\nOra: '+ora;
+    var btnEmail=document.createElement('a'); btnEmail.className='btn-verde';
+    btnEmail.href='mailto:'+emailGestore+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
     btnEmail.textContent='📧 Invia conferma al gestore';
     modal.appendChild(btnEmail);
   }
 
-  // btn chiudi
-  var btnCh = document.createElement('button'); btnCh.className='btn-chiudi';
-  btnCh.textContent='Chiudi';
-  btnCh.onclick = chiudiModal;
+  var btnCh=document.createElement('button'); btnCh.className='btn-chiudi'; btnCh.textContent='Chiudi';
+  btnCh.onclick=chiudiModal;
   modal.appendChild(btnCh);
 
-  // disegna barcode
   setTimeout(function(){
-    var bc = document.getElementById('barcodeCanvas');
-    if (bc) try { drawBarcode(bc, codice); } catch(e){}
-  }, 150);
+    var bc=document.getElementById('barcodeCanvas');
+    if (bc) try{ drawBarcode(bc,codice); }catch(e){}
+  },150);
 }
 
-function scaricaBarcode(codice, nome, cognome, dataLabel, postazione) {
-  var bcCanvas = document.createElement('canvas');
-  try { drawBarcode(bcCanvas, codice); } catch(e){ return; }
-  var final = document.createElement('canvas');
-  final.width = Math.max(bcCanvas.width, 520);
-  final.height = bcCanvas.height + 36;
-  var ctx = final.getContext('2d');
-  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(0,0,final.width,final.height);
-  ctx.drawImage(bcCanvas, Math.round((final.width-bcCanvas.width)/2), 0);
-  ctx.fillStyle = '#1A1A2E';
-  ctx.font = 'bold 14px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText(nome + ' ' + cognome + '  -  Ombrellone ' + postazione + '  -  ' + dataLabel, final.width/2, bcCanvas.height+24);
-  var link = document.createElement('a');
-  link.download = 'prenotazione-' + codice + '.png';
-  link.href = final.toDataURL('image/png');
+// ===== BARCODE Code128 =====
+function drawBarcode(canvas, text) {
+  var CHARS=' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
+  var PAT=["11011001100","11001101100","11001100110","10010011000","10010001100","10001001100","10011001000","10011000100","10001100100","11001001000","11001000100","11000100100","10110011100","10011011100","10011001110","10111001100","10011101100","10011100110","11001110010","11001011100","11001001110","11011100100","11001110100","11101101110","11101001100","11100101100","11100100110","11101100100","11100110100","11100110010","11011011000","11011000110","11000110110","10100011000","10001011000","10001000110","10110001000","10001101000","10001100010","11010001000","11000101000","11000100010","10110111000","10110001110","10001101110","10111011000","10111000110","10001110110","11101110110","11010001110","11000101110","11011101000","11011100010","11011101110","11101011000","11101000110","11100010110","11101101000","11101100010","11100011010","11101111010","11001000010","11110001010","10100110000","10100001100","10010110000","10010000110","10000101100","10000100110","10110010000","10110000100","10011010000","10011000010","10000110100","10000110010","11000010010","11001010000","11110111010","11000010100","10001111010","10100111100","10010111100","10010011110","10111100100","10011110100","10011110010","11110100100","11110010100","11110010010","11011011110","11011110110","11110110110","10101111000","10100011110","10001011110","10111101000","10111100010","11110101000","11110100010","10111011110","10111101110","11101011110","11110101110","11010000100","11010010000","11010011100","1100011101011"];
+  var codes=[104];
+  for (var i=0;i<text.length;i++){ var idx=CHARS.indexOf(text[i]); codes.push(idx<0?0:idx); }
+  var chk=codes[0];
+  for (var j=1;j<codes.length;j++) chk+=j*codes[j];
+  codes.push(chk%103); codes.push(106);
+  var bars='';
+  for (var k=0;k<codes.length;k++) bars+=PAT[codes[k]];
+  var bw=3,bh=80,mg=10,fs=16;
+  var w=bars.length*bw+mg*2, h=bh+mg*2+fs+4;
+  canvas.width=w; canvas.height=h;
+  var ctx=canvas.getContext('2d');
+  ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,w,h);
+  ctx.fillStyle='#005F92';
+  for (var bi=0;bi<bars.length;bi++){ if(bars[bi]==='1') ctx.fillRect(mg+bi*bw,mg,bw,bh); }
+  ctx.fillStyle='#1A1A2E'; ctx.font='bold '+fs+'px monospace'; ctx.textAlign='center';
+  ctx.fillText(text,w/2,bh+mg+fs);
+}
+
+function scaricaBarcode(codice,nome,cognome,periodoLabel,postazione) {
+  var bcCanvas=document.createElement('canvas');
+  try{ drawBarcode(bcCanvas,codice); }catch(e){ return; }
+  var final=document.createElement('canvas');
+  final.width=Math.max(bcCanvas.width,520); final.height=bcCanvas.height+36;
+  var ctx=final.getContext('2d');
+  ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,final.width,final.height);
+  ctx.drawImage(bcCanvas,Math.round((final.width-bcCanvas.width)/2),0);
+  ctx.fillStyle='#1A1A2E'; ctx.font='bold 13px Arial'; ctx.textAlign='center';
+  ctx.fillText(nome+' '+cognome+'  -  Omb. '+postazione+'  -  '+periodoLabel, final.width/2, bcCanvas.height+24);
+  var link=document.createElement('a');
+  link.download='prenotazione-'+codice+'.png';
+  link.href=final.toDataURL('image/png');
   link.click();
 }
 
-// make chiudiModal accessible from inline (just in case)
-window.chiudiModal = chiudiModal;
-
+window.chiudiModal=chiudiModal;
 init();
 </script>
 </body>
