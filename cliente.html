@@ -8,28 +8,45 @@
 <meta name="apple-mobile-web-app-title" content="Lido Prenotazioni">
 <meta name="theme-color" content="#0077B6">
 <title>Lido Prenotazioni</title>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <style>
 :root{--sea:#0077B6;--sand:#F4E0B5;--text:#1A1A2E;--text-light:#5A6A7A;--free:#48CAE4;--booked:#E76F51;--occupied:#B5451B;--family:#7B61FF;--selected:#F4D35E;--green:#2D9D78;--radius:10px;--shadow:0 2px 12px rgba(0,119,182,0.13)}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#EBF7FC;color:var(--text);min-height:100vh}
-.header{background:var(--sea);color:white;padding:14px 18px 12px;box-shadow:0 2px 8px rgba(0,0,0,.18)}
-.header-title{font-size:18px;font-weight:800}
-.header-sub{font-size:12px;opacity:.75;margin-top:2px}
+.header{background:var(--sea);color:white;padding:14px 18px 12px;box-shadow:0 2px 8px rgba(0,0,0,.18);display:flex;align-items:center;justify-content:space-between}
+.header-title{font-size:17px;font-weight:800}
+.header-sub{font-size:11px;opacity:.75;margin-top:2px}
+.header-user{background:rgba(255,255,255,.18);border:none;color:white;font-size:12px;font-weight:600;padding:6px 12px;border-radius:20px;cursor:pointer}
 .main{padding:16px}
 .loading-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:14px}
 .spinner{width:40px;height:40px;border:4px solid #D0DDE8;border-top-color:var(--sea);border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{font-size:14px;color:var(--text-light)}
-.date-bar{background:white;border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.date-bar-label{font-size:12px;font-weight:700;color:var(--text-light);white-space:nowrap}
-.date-bar input[type=date]{flex:1;min-width:120px;padding:9px 12px;border:1.5px solid #D0DDE8;border-radius:8px;font-size:14px;font-weight:700;color:var(--sea);outline:none;-webkit-appearance:none;background:#F7FAFC}
-.date-today-btn{background:var(--sea);color:white;border:none;padding:9px 12px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap}
+/* AUTH SCREENS */
+.auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;padding:20px}
+.auth-box{background:white;border-radius:18px;padding:28px 22px;width:100%;max-width:380px;box-shadow:var(--shadow)}
+.auth-logo{font-size:48px;text-align:center;margin-bottom:12px}
+.auth-title{font-size:20px;font-weight:800;text-align:center;margin-bottom:6px}
+.auth-sub{font-size:13px;color:var(--text-light);text-align:center;margin-bottom:22px}
+.auth-field{margin-bottom:14px}
+.auth-field label{display:block;font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.auth-field input{width:100%;padding:13px 14px;border:1.5px solid #D0DDE8;border-radius:10px;font-size:16px;color:var(--text);background:#F7FAFC;outline:none;-webkit-appearance:none}
+.auth-field input:focus{border-color:var(--sea);background:white}
+.btn-auth{width:100%;background:var(--sea);color:white;border:none;padding:15px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px}
+.btn-auth:disabled{opacity:.6;cursor:not-allowed}
+.btn-link{width:100%;background:none;border:none;color:var(--sea);font-size:14px;cursor:pointer;padding:12px;margin-top:6px;text-decoration:underline}
+.auth-error{color:var(--booked);font-size:13px;margin-top:8px;text-align:center;min-height:18px}
+.otp-box{background:#E8F4FB;border-radius:12px;padding:16px;margin-bottom:16px;text-align:center}
+.otp-box-text{font-size:13px;color:var(--text-light);margin-bottom:4px}
+.otp-box-email{font-size:14px;font-weight:700;color:var(--sea)}
+.otp-input{text-align:center;letter-spacing:8px;font-size:24px;font-weight:800;color:var(--sea)}
+/* MAIN APP */
 .date-range-bar{background:white;border-radius:var(--radius);padding:12px 14px;margin-bottom:14px;box-shadow:var(--shadow)}
 .date-range-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .date-range-row:last-child{margin-bottom:0}
-.date-range-label{font-size:12px;font-weight:700;color:var(--text-light);width:60px;flex-shrink:0}
+.date-range-label{font-size:12px;font-weight:700;color:var(--text-light);width:55px;flex-shrink:0}
 .date-range-row input[type=date]{flex:1;padding:9px 12px;border:1.5px solid #D0DDE8;border-radius:8px;font-size:14px;font-weight:700;color:var(--sea);outline:none;-webkit-appearance:none;background:#F7FAFC}
-.giorni-badge{background:#E0F4FB;color:var(--sea);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;text-align:center}
+.giorni-badge{background:#E0F4FB;color:var(--sea);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:700;text-align:center;margin-top:6px}
 .zona-selector{display:flex;gap:10px;margin-bottom:14px}
 .zona-btn{flex:1;padding:11px 8px;border-radius:12px;border:2px solid #D0DDE8;background:white;font-size:13px;font-weight:700;color:var(--text-light);cursor:pointer;text-align:center}
 .zona-btn.active-normal{background:var(--sea);border-color:var(--sea);color:white}
@@ -66,12 +83,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .zona-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:14px}
 .zona-badge.normale{background:#E0F4FB;color:var(--sea)}
 .zona-badge.family{background:#EDE8FF;color:var(--family)}
-.field{margin-bottom:12px}
-.field label{display:block;font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
-.field input{width:100%;padding:12px 14px;border:1.5px solid #D0DDE8;border-radius:10px;font-size:16px;color:var(--text);background:#F7FAFC;outline:none;-webkit-appearance:none}
-.field input:focus{border-color:var(--sea);background:white}
-.field-display{background:#E8F4FB;border-radius:10px;padding:12px 14px;font-size:15px;font-weight:700;color:var(--sea)}
-/* ATTREZZATURE */
+.field-display{background:#E8F4FB;border-radius:10px;padding:12px 14px;font-size:15px;font-weight:700;color:var(--sea);margin-bottom:12px}
 .attrezzature-box{background:#F7FAFC;border-radius:12px;padding:14px;margin-bottom:14px}
 .attr-title{font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
 .attr-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #EEF2F6}
@@ -79,7 +91,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .attr-name{font-size:14px;font-weight:600;color:var(--text)}
 .attr-price{font-size:12px;color:var(--text-light)}
 .attr-qty{display:flex;align-items:center;gap:10px}
-.attr-qty button{width:32px;height:32px;border-radius:50%;border:none;font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.attr-qty button{width:32px;height:32px;border-radius:50%;border:none;font-size:18px;font-weight:700;cursor:pointer}
 .btn-minus{background:#EEF2F6;color:var(--text)}
 .btn-plus{background:var(--sea);color:white}
 .attr-qty-num{font-size:16px;font-weight:800;width:24px;text-align:center;color:var(--text)}
@@ -87,7 +99,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .totale-label{font-size:12px;color:var(--text-light);margin-bottom:4px}
 .totale-value{font-size:28px;font-weight:800;color:var(--sea)}
 .totale-detail{font-size:11px;color:var(--text-light);margin-top:4px}
-/* CONFERMA */
+.btn-prenota{width:100%;background:var(--sea);color:white;border:none;padding:15px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px}
+.btn-prenota.family-mode{background:var(--family)}
+.btn-prenota:disabled{opacity:.6;cursor:not-allowed}
+.btn-annulla{width:100%;background:none;color:var(--text-light);border:none;padding:12px;font-size:14px;cursor:pointer;margin-top:4px}
 .conf-box{text-align:center;padding:8px 0 4px}
 .conf-icon{font-size:52px;margin-bottom:10px}
 .conf-title{font-size:20px;font-weight:800;color:var(--sea);margin-bottom:6px}
@@ -99,29 +114,23 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .det-box{font-size:14px;color:var(--text);margin-bottom:18px;line-height:1.8;text-align:left;background:#F7FAFC;border-radius:10px;padding:14px 16px}
 .btn-blu{display:block;width:100%;background:var(--sea);color:white;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;text-decoration:none;text-align:center}
 .btn-verde{display:block;width:100%;background:var(--green);color:white;border:none;padding:14px;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;text-align:center;text-decoration:none}
-.btn-prenota{width:100%;background:var(--sea);color:white;border:none;padding:15px;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:6px}
-.btn-prenota.family-mode{background:var(--family)}
-.btn-prenota:disabled{opacity:.6;cursor:not-allowed}
-.btn-annulla{width:100%;background:none;color:var(--text-light);border:none;padding:12px;font-size:14px;cursor:pointer;margin-top:4px}
 .btn-chiudi{width:100%;background:#EBF7FC;color:var(--sea);border:none;padding:13px;border-radius:12px;font-size:14px;font-weight:700;cursor:pointer}
 .empty-state{text-align:center;padding:40px 20px;color:var(--text-light);font-size:14px}
 .empty-icon{font-size:44px;margin-bottom:10px}
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);background:#1A1A2E;color:white;padding:12px 22px;border-radius:24px;font-size:14px;font-weight:600;z-index:999;transition:transform .3s ease;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.25)}
 .toast.show{transform:translateX(-50%) translateY(0)}
-@media(min-width:600px){.modal{max-width:420px;margin:auto;border-radius:18px}.modal-overlay{align-items:center}}
+@media(min-width:600px){.modal{max-width:420px;margin:auto;border-radius:18px}.modal-overlay{align-items:center}.auth-box{padding:36px 30px}}
 </style>
 </head>
 <body>
 <div class="header">
-  <div class="header-title" id="headerTitle">🌊 Prenota il tuo Ombrellone</div>
-  <div class="header-sub">Seleziona date e posto</div>
-</div>
-<div class="main" id="appContent">
-  <div class="loading-screen">
-    <div class="spinner"></div>
-    <div class="loading-text">Caricamento...</div>
+  <div>
+    <div class="header-title" id="headerTitle">🌊 Lido Prenotazioni</div>
+    <div class="header-sub" id="headerSub">Accedi per prenotare</div>
   </div>
+  <button class="header-user" id="headerUserBtn" style="display:none"></button>
 </div>
+<div id="appRoot"></div>
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal" id="modalContent"></div>
 </div>
@@ -129,7 +138,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCJ4vGsoBwtf8tv5Bvj4s17UX2sqUl-ExA",
@@ -142,40 +151,33 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// EmailJS
+const EJS_PUBLIC = '-2E1SqXDsJrGYmq6y';
+const EJS_SERVICE = 'service_ahyar9f';
+const EJS_TEMPLATE = 'template_s2zzk6s';
+emailjs.init(EJS_PUBLIC);
+
 // ===== STATO =====
 var config = {
   nomeLido:'Lido Prenotazioni', emailGestore:'', whatsapp:'', pin:'1234',
-  rows:[
-    {name:'A',count:8,zona:'normale',moltiplicatore:1.5},
-    {name:'B',count:8,zona:'normale',moltiplicatore:1.2},
-    {name:'C',count:8,zona:'family',moltiplicatore:1.0},
-    {name:'D',count:6,zona:'family',moltiplicatore:1.0}
-  ],
-  attrezzature:[
-    {id:'omb',nome:'Ombrellone',prezzoBase:8,icona:'⛱️'},
-    {id:'lett',nome:'Lettino',prezzoBase:5,icona:'🛏️'},
-    {id:'sdraio',nome:'Sdraio',prezzoBase:3,icona:'🪑'}
-  ],
-  periodi:[
-    {nome:'Bassa stagione',dataInizio:'06-01',dataFine:'06-30',moltiplicatore:1.0},
-    {nome:'Alta stagione',dataInizio:'07-01',dataFine:'07-31',moltiplicatore:1.2},
-    {nome:'Picco estate',dataInizio:'08-01',dataFine:'08-31',moltiplicatore:1.5}
-  ],
+  rows:[{name:'A',count:8,zona:'normale',moltiplicatore:1.5},{name:'B',count:8,zona:'normale',moltiplicatore:1.2},{name:'C',count:8,zona:'family',moltiplicatore:1.0},{name:'D',count:6,zona:'family',moltiplicatore:1.0}],
+  attrezzature:[{id:'omb',nome:'Ombrellone',prezzoBase:8,icona:'⛱️'},{id:'lett',nome:'Lettino',prezzoBase:5,icona:'🛏️'},{id:'sdraio',nome:'Sdraio',prezzoBase:3,icona:'🪑'}],
+  periodi:[{nome:'Bassa',dataInizio:'06-01',dataFine:'06-30',moltiplicatore:1.0},{nome:'Alta',dataInizio:'07-01',dataFine:'07-31',moltiplicatore:1.2},{nome:'Picco',dataInizio:'08-01',dataFine:'08-31',moltiplicatore:1.5}],
   moltiplicatoreWeekend:1.2
 };
-
-var prenotazioniMultiData = {};  // { "A-1": Set di date occupate }
+var utente = null;  // { uid, nome, cognome, tel, email, username, verificato }
+var pendingOTP = null;  // { codice, email, scade, datiRegistrazione }
+var prenotazioniMultiData = {};
 var zonaAttiva = 'normale';
 var dataInizio = '';
 var dataFine = '';
 var selectedPostazione = null;
-var qtaAttr = {};  // { id: quantita }
-var unsub = null;
+var qtaAttr = {};
 
 // ===== UTILS =====
 function todayStr() {
   var d = new Date();
-  return d.getFullYear() + '-' + ('0'+(d.getMonth()+1)).slice(-2) + '-' + ('0'+d.getDate()).slice(-2);
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
 }
 function formatIT(str) {
   if (!str) return '';
@@ -194,155 +196,342 @@ function generaCodice() {
   for (var i=0; i<5; i++) code += chars.charAt(Math.floor(Math.random()*chars.length));
   return code;
 }
-
-// Calcola tutti i giorni tra due date
+function generaOTP() {
+  return Math.floor(100000 + Math.random()*900000).toString();
+}
 function getDateRange(inizio, fine) {
   var dates = [];
-  var cur = new Date(inizio + 'T12:00:00');
-  var end = new Date(fine + 'T12:00:00');
+  var cur = new Date(inizio+'T12:00:00');
+  var end = new Date(fine+'T12:00:00');
   while (cur <= end) {
-    var y = cur.getFullYear();
-    var m = ('0'+(cur.getMonth()+1)).slice(-2);
-    var d = ('0'+cur.getDate()).slice(-2);
-    dates.push(y+'-'+m+'-'+d);
+    dates.push(cur.getFullYear()+'-'+('0'+(cur.getMonth()+1)).slice(-2)+'-'+('0'+cur.getDate()).slice(-2));
     cur.setDate(cur.getDate()+1);
   }
   return dates;
 }
-
 function numGiorni(inizio, fine) {
   if (!inizio || !fine) return 0;
-  var a = new Date(inizio+'T12:00:00');
-  var b = new Date(fine+'T12:00:00');
+  var a = new Date(inizio+'T12:00:00'), b = new Date(fine+'T12:00:00');
   var diff = Math.round((b-a)/(1000*60*60*24));
-  return diff < 0 ? 0 : diff + 1;
+  return diff < 0 ? 0 : diff+1;
 }
-
-// ===== CALCOLO PREZZI =====
-function getMoltiplicatorePeriodo(dataStr) {
-  var periodi = config.periodi || [];
-  var mmdd = dataStr.slice(5); // MM-DD
-  for (var i=0; i<periodi.length; i++) {
-    var p = periodi[i];
-    if (mmdd >= p.dataInizio && mmdd <= p.dataFine) return p.moltiplicatore;
-  }
-  return 1.0;
+function formatEuro(val) {
+  return parseFloat(val).toFixed(2).replace('.',',')+' €';
 }
-
-function getMoltiplicatoreGiorno(dataStr) {
-  var d = new Date(dataStr+'T12:00:00');
-  var dow = d.getDay(); // 0=dom, 6=sab
-  if (dow === 0 || dow === 6) return config.moltiplicatoreWeekend || 1.2;
-  return 1.0;
-}
-
 function getMoltiplicatoreFila(nomeFila) {
-  var rows = config.rows || [];
-  for (var i=0; i<rows.length; i++) {
-    if (rows[i].name === nomeFila) return rows[i].moltiplicatore || 1.0;
-  }
-  return 1.0;
+  var r = (config.rows||[]).find(function(r){ return r.name===nomeFila; });
+  return r ? (r.moltiplicatore||1.0) : 1.0;
 }
-
+function getMoltiplicatorePeriodo(dataStr) {
+  var mmdd = dataStr.slice(5);
+  var p = (config.periodi||[]).find(function(p){ return mmdd>=p.dataInizio && mmdd<=p.dataFine; });
+  return p ? p.moltiplicatore : 1.0;
+}
+function getMoltiplicatoreGiorno(dataStr) {
+  var dow = new Date(dataStr+'T12:00:00').getDay();
+  return (dow===0||dow===6) ? (config.moltiplicatoreWeekend||1.2) : 1.0;
+}
 function calcolaTotale(posto, dates) {
   if (!dates || !dates.length) return 0;
   var fila = posto.split('-')[0];
   var molFila = getMoltiplicatoreFila(fila);
-  var totale = 0;
-  for (var di=0; di<dates.length; di++) {
-    var data = dates[di];
-    var molPeriodo = getMoltiplicatorePeriodo(data);
-    var molGiorno = getMoltiplicatoreGiorno(data);
-    var attrezzature = config.attrezzature || [];
-    for (var ai=0; ai<attrezzature.length; ai++) {
-      var attr = attrezzature[ai];
-      var qty = qtaAttr[attr.id] || 0;
-      if (qty > 0) {
-        totale += attr.prezzoBase * qty * molFila * molPeriodo * molGiorno;
-      }
-    }
-  }
-  return Math.round(totale * 100) / 100;
+  var tot = 0;
+  dates.forEach(function(data) {
+    var molP = getMoltiplicatorePeriodo(data);
+    var molG = getMoltiplicatoreGiorno(data);
+    (config.attrezzature||[]).forEach(function(attr) {
+      var qty = qtaAttr[attr.id]||0;
+      if (qty>0) tot += attr.prezzoBase*qty*molFila*molP*molG;
+    });
+  });
+  return Math.round(tot*100)/100;
 }
-
-function formatEuro(val) {
-  return val.toFixed(2).replace('.', ',') + ' €';
+function initQtaAttr() {
+  qtaAttr = {};
+  (config.attrezzature||[]).forEach(function(a,i){ qtaAttr[a.id] = i===0 ? 1 : 0; });
+}
+function salvaUtenteLocale(u) {
+  try { localStorage.setItem('lido_utente', JSON.stringify(u)); } catch(e){}
+}
+function caricaUtenteLocale() {
+  try { var s=localStorage.getItem('lido_utente'); return s ? JSON.parse(s) : null; } catch(e){ return null; }
 }
 
 // ===== INIT =====
 async function init() {
-  dataInizio = todayStr();
-  dataFine = todayStr();
-  // mostra subito
-  renderApp();
-  // carica config Firebase
+  // carica config
   try {
     var snap = await getDoc(doc(db,'config','lido'));
-    if (snap.exists()) {
-      config = snap.data();
-      // init qtaAttr da config
-      initQtaAttr();
-      document.getElementById('headerTitle').textContent = '🌊 ' + config.nomeLido;
-    } else {
-      setDoc(doc(db,'config','lido'), config).catch(function(){});
-    }
-    initQtaAttr();
-    renderApp();
-  } catch(e) { initQtaAttr(); }
-}
-
-function initQtaAttr() {
-  qtaAttr = {};
-  var attrezzature = config.attrezzature || [];
-  for (var i=0; i<attrezzature.length; i++) {
-    qtaAttr[attrezzature[i].id] = 0;
-  }
-  if (attrezzature.length > 0) qtaAttr[attrezzature[0].id] = 1; // ombrellone default 1
-}
-
-// ===== CARICA PRENOTAZIONI RANGE DATE =====
-async function loadPrenotazioniRange() {
-  if (!dataInizio || !dataFine) return;
-  var dates = getDateRange(dataInizio, dataFine);
-  prenotazioniMultiData = {};
-  try {
-    for (var i=0; i<dates.length; i++) {
-      var snap = await getDocs(query(collection(db,'prenotazioni'), where('data','==',dates[i])));
-      snap.forEach(function(d) {
-        var dd = d.data();
-        if (!prenotazioniMultiData[dd.posto]) prenotazioniMultiData[dd.posto] = [];
-        prenotazioniMultiData[dd.posto].push(dd.data);
-      });
-    }
+    if (snap.exists()) { config = snap.data(); }
+    else { setDoc(doc(db,'config','lido'),config).catch(function(){}); }
   } catch(e) {}
-  renderMap();
+  initQtaAttr();
+
+  // controlla sessione
+  utente = caricaUtenteLocale();
+  if (utente && utente.verificato) {
+    avviaApp();
+  } else {
+    mostraLogin();
+  }
 }
 
-// ===== RENDER APP =====
-function renderApp() {
-  var div = document.getElementById('appContent');
-  div.innerHTML = '';
+// ===== AUTH SCREENS =====
+function mostraLogin() {
+  utente = null;
+  document.getElementById('headerSub').textContent = 'Accedi per prenotare';
+  document.getElementById('headerUserBtn').style.display = 'none';
+  var root = document.getElementById('appRoot');
+  root.innerHTML = '';
 
-  // DATE RANGE BAR
+  var screen = document.createElement('div'); screen.className = 'auth-screen';
+  var box = document.createElement('div'); box.className = 'auth-box';
+
+  box.innerHTML = '<div class="auth-logo">🌊</div><div class="auth-title">Bentornato!</div><div class="auth-sub">Accedi per prenotare il tuo ombrellone</div>';
+
+  var fUser = mkAuthField('Username o Email','aLoginUser','text','mario.rossi');
+  var fPass = mkAuthField('Password','aLoginPass','password','••••••••');
+  var btnLogin = document.createElement('button'); btnLogin.className='btn-auth'; btnLogin.textContent='Accedi';
+  var errEl = document.createElement('div'); errEl.className='auth-error'; errEl.id='loginErr';
+  var btnReg = document.createElement('button'); btnReg.className='btn-link'; btnReg.textContent='Non hai un account? Registrati';
+
+  btnLogin.onclick = function(){ doLogin(errEl); };
+  btnReg.onclick = mostraRegistrazione;
+
+  // enter su password
+  fPass.querySelector('input').addEventListener('keydown', function(e){ if(e.key==='Enter') doLogin(errEl); });
+
+  box.appendChild(fUser); box.appendChild(fPass); box.appendChild(errEl);
+  box.appendChild(btnLogin); box.appendChild(btnReg);
+  screen.appendChild(box);
+  root.appendChild(screen);
+}
+
+function mostraRegistrazione() {
+  var root = document.getElementById('appRoot');
+  root.innerHTML = '';
+  var screen = document.createElement('div'); screen.className='auth-screen';
+  var box = document.createElement('div'); box.className='auth-box';
+  box.innerHTML = '<div class="auth-logo">📝</div><div class="auth-title">Crea Account</div><div class="auth-sub">Inserisci i tuoi dati per registrarti</div>';
+
+  var fNome = mkAuthField('Nome','rNome','text','Mario');
+  var fCognome = mkAuthField('Cognome','rCognome','text','Rossi');
+  var fTel = mkAuthField('Cellulare','rTel','tel','+39 333 1234567');
+  var fEmail = mkAuthField('Email','rEmail','email','mario@email.com');
+  var fUser = mkAuthField('Username','rUsername','text','mario.rossi');
+  var fPass = mkAuthField('Password (min. 6 caratteri)','rPass','password','••••••••');
+  var errEl = document.createElement('div'); errEl.className='auth-error'; errEl.id='regErr';
+  var btnReg = document.createElement('button'); btnReg.className='btn-auth'; btnReg.textContent='Registrati e verifica Email';
+  var btnBack = document.createElement('button'); btnBack.className='btn-link'; btnBack.textContent='Hai gia un account? Accedi';
+
+  btnReg.onclick = function(){ doRegistrazione(errEl); };
+  btnBack.onclick = mostraLogin;
+
+  box.appendChild(fNome); box.appendChild(fCognome); box.appendChild(fTel);
+  box.appendChild(fEmail); box.appendChild(fUser); box.appendChild(fPass);
+  box.appendChild(errEl); box.appendChild(btnReg); box.appendChild(btnBack);
+  screen.appendChild(box);
+  root.appendChild(screen);
+}
+
+function mostraVerificaOTP(email) {
+  var root = document.getElementById('appRoot');
+  root.innerHTML = '';
+  var screen = document.createElement('div'); screen.className='auth-screen';
+  var box = document.createElement('div'); box.className='auth-box';
+  box.innerHTML = '<div class="auth-logo">📧</div><div class="auth-title">Verifica Email</div>';
+
+  var otpBox = document.createElement('div'); otpBox.className='otp-box';
+  var otpTxt = document.createElement('div'); otpTxt.className='otp-box-text'; otpTxt.textContent='Abbiamo inviato un codice a';
+  var otpEmail = document.createElement('div'); otpEmail.className='otp-box-email'; otpEmail.textContent=email;
+  otpBox.appendChild(otpTxt); otpBox.appendChild(otpEmail);
+
+  var fOTP = mkAuthField('Codice di verifica (6 cifre)','otpCode','text','123456');
+  fOTP.querySelector('input').className += ' otp-input';
+  fOTP.querySelector('input').maxLength = 6;
+  fOTP.querySelector('input').inputMode = 'numeric';
+
+  var errEl = document.createElement('div'); errEl.className='auth-error'; errEl.id='otpErr';
+  var btnVerifica = document.createElement('button'); btnVerifica.className='btn-auth'; btnVerifica.textContent='Verifica e Accedi';
+  var btnResend = document.createElement('button'); btnResend.className='btn-link'; btnResend.textContent='Rinvia codice';
+  var btnBack = document.createElement('button'); btnBack.className='btn-link'; btnBack.textContent='Torna al login';
+
+  btnVerifica.onclick = function(){ doVerificaOTP(errEl); };
+  btnResend.onclick = function(){ inviaOTP(email, pendingOTP ? pendingOTP.datiRegistrazione : null, true); showToast('Codice reinviato!'); };
+  btnBack.onclick = mostraLogin;
+
+  fOTP.querySelector('input').addEventListener('keydown', function(e){ if(e.key==='Enter') doVerificaOTP(errEl); });
+
+  box.appendChild(otpBox); box.appendChild(fOTP); box.appendChild(errEl);
+  box.appendChild(btnVerifica); box.appendChild(btnResend); box.appendChild(btnBack);
+  screen.appendChild(box);
+  root.appendChild(screen);
+}
+
+function mkAuthField(lbl, id, type, ph) {
+  var f = document.createElement('div'); f.className='auth-field';
+  var l = document.createElement('label'); l.textContent=lbl;
+  var i = document.createElement('input'); i.type=type; i.id=id; i.placeholder=ph; i.autocomplete='off';
+  f.appendChild(l); f.appendChild(i); return f;
+}
+
+// ===== LOGIN =====
+async function doLogin(errEl) {
+  var userVal = (document.getElementById('aLoginUser').value||'').trim();
+  var passVal = (document.getElementById('aLoginPass').value||'').trim();
+  errEl.textContent = '';
+  if (!userVal || !passVal) { errEl.textContent='Compila tutti i campi'; return; }
+
+  var btn = document.querySelector('.btn-auth');
+  if (btn) { btn.disabled=true; btn.textContent='Accesso in corso...'; }
+
+  try {
+    // cerca per username o email
+    var snap1 = await getDocs(query(collection(db,'utenti'), where('username','==',userVal)));
+    var snap2 = await getDocs(query(collection(db,'utenti'), where('email','==',userVal)));
+    var uDoc = null;
+    if (!snap1.empty) uDoc = snap1.docs[0].data();
+    else if (!snap2.empty) uDoc = snap2.docs[0].data();
+
+    if (!uDoc) { errEl.textContent='Utente non trovato'; if(btn){btn.disabled=false;btn.textContent='Accedi';} return; }
+    if (!uDoc.verificato) { errEl.textContent='Email non verificata. Controlla la tua casella.'; if(btn){btn.disabled=false;btn.textContent='Accedi';} return; }
+    if (uDoc.password !== btoa(passVal)) { errEl.textContent='Password errata'; if(btn){btn.disabled=false;btn.textContent='Accedi';} return; }
+
+    utente = uDoc;
+    salvaUtenteLocale(utente);
+    avviaApp();
+  } catch(e) {
+    errEl.textContent='Errore connessione. Riprova.';
+    if(btn){btn.disabled=false;btn.textContent='Accedi';}
+  }
+}
+
+// ===== REGISTRAZIONE =====
+async function doRegistrazione(errEl) {
+  var nome = (document.getElementById('rNome').value||'').trim();
+  var cognome = (document.getElementById('rCognome').value||'').trim();
+  var tel = (document.getElementById('rTel').value||'').trim();
+  var email = (document.getElementById('rEmail').value||'').trim().toLowerCase();
+  var username = (document.getElementById('rUsername').value||'').trim().toLowerCase();
+  var password = (document.getElementById('rPass').value||'').trim();
+
+  errEl.textContent='';
+  if (!nome||!cognome||!tel||!email||!username||!password) { errEl.textContent='Compila tutti i campi'; return; }
+  if (password.length < 6) { errEl.textContent='Password minimo 6 caratteri'; return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent='Email non valida'; return; }
+
+  var btn = document.querySelector('.btn-auth');
+  if (btn) { btn.disabled=true; btn.textContent='Invio codice...'; }
+
+  try {
+    // controlla se username o email esistono gia
+    var su = await getDocs(query(collection(db,'utenti'), where('username','==',username)));
+    if (!su.empty) { errEl.textContent='Username gia in uso'; if(btn){btn.disabled=false;btn.textContent='Registrati e verifica Email';} return; }
+    var se = await getDocs(query(collection(db,'utenti'), where('email','==',email)));
+    if (!se.empty) { errEl.textContent='Email gia registrata'; if(btn){btn.disabled=false;btn.textContent='Registrati e verifica Email';} return; }
+
+    var dati = { nome:nome, cognome:cognome, tel:tel, email:email, username:username, password:btoa(password), verificato:false };
+    await inviaOTP(email, dati, false);
+    mostraVerificaOTP(email);
+  } catch(e) {
+    errEl.textContent='Errore: riprova tra poco';
+    if(btn){btn.disabled=false;btn.textContent='Registrati e verifica Email';}
+  }
+}
+
+async function inviaOTP(email, dati, isResend) {
+  var otp = generaOTP();
+  var scade = Date.now() + 10*60*1000; // 10 minuti
+  pendingOTP = { codice:otp, email:email, scade:scade, datiRegistrazione:dati };
+
+  // salva OTP su Firebase
+  await setDoc(doc(db,'otp',email), { codice:otp, scade:scade, email:email });
+
+  // invia email via EmailJS
+  await emailjs.send(EJS_SERVICE, EJS_TEMPLATE, {
+    email: email,
+    passcode: otp,
+    time: new Date(scade).toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'})
+  });
+}
+
+// ===== VERIFICA OTP =====
+async function doVerificaOTP(errEl) {
+  var codiceInserito = (document.getElementById('otpCode').value||'').trim();
+  errEl.textContent='';
+  if (!codiceInserito || codiceInserito.length !== 6) { errEl.textContent='Inserisci il codice a 6 cifre'; return; }
+
+  var btn = document.querySelector('.btn-auth');
+  if (btn) { btn.disabled=true; btn.textContent='Verifica...'; }
+
+  try {
+    var email = pendingOTP ? pendingOTP.email : '';
+    var otpSnap = await getDoc(doc(db,'otp',email));
+    if (!otpSnap.exists()) { errEl.textContent='Codice scaduto. Richiedi un nuovo codice.'; if(btn){btn.disabled=false;btn.textContent='Verifica e Accedi';} return; }
+
+    var otpData = otpSnap.data();
+    if (Date.now() > otpData.scade) { errEl.textContent='Codice scaduto. Clicca "Rinvia codice".'; if(btn){btn.disabled=false;btn.textContent='Verifica e Accedi';} return; }
+    if (otpData.codice !== codiceInserito) { errEl.textContent='Codice errato. Riprova.'; if(btn){btn.disabled=false;btn.textContent='Verifica e Accedi';} return; }
+
+    // OTP corretto — crea/aggiorna utente
+    var dati = pendingOTP.datiRegistrazione;
+    dati.verificato = true;
+    dati.uid = email;
+    dati.dataRegistrazione = new Date().toISOString();
+    await setDoc(doc(db,'utenti',email), dati);
+
+    // elimina OTP usato
+    try { await setDoc(doc(db,'otp',email), { usato:true }); } catch(e){}
+
+    utente = dati;
+    salvaUtenteLocale(utente);
+    pendingOTP = null;
+    showToast('Benvenuto ' + dati.nome + '!');
+    avviaApp();
+  } catch(e) {
+    errEl.textContent='Errore verifica. Riprova.';
+    if(btn){btn.disabled=false;btn.textContent='Verifica e Accedi';}
+  }
+}
+
+// ===== APP PRINCIPALE =====
+function avviaApp() {
+  dataInizio = todayStr();
+  dataFine = todayStr();
+  initQtaAttr();
+
+  document.getElementById('headerTitle').textContent = '🌊 ' + config.nomeLido;
+  document.getElementById('headerSub').textContent = 'Ciao, ' + utente.nome + '!';
+  var btn = document.getElementById('headerUserBtn');
+  btn.textContent = '👤 Esci';
+  btn.style.display = 'block';
+  btn.onclick = function(){
+    localStorage.removeItem('lido_utente');
+    utente = null;
+    mostraLogin();
+  };
+
+  var root = document.getElementById('appRoot');
+  root.innerHTML = '';
+
+  var main = document.createElement('div'); main.className='main'; main.id='mainApp';
+
+  // DATE RANGE
   var drBar = document.createElement('div'); drBar.className='date-range-bar';
-
-  var row1 = document.createElement('div'); row1.className='date-range-row';
+  var r1 = document.createElement('div'); r1.className='date-range-row';
   var l1 = document.createElement('div'); l1.className='date-range-label'; l1.textContent='Dal';
-  var inp1 = document.createElement('input'); inp1.type='date'; inp1.id='inputDataIn'; inp1.value=dataInizio;
-  inp1.onchange = function(){ dataInizio=this.value; if(dataFine<dataInizio){dataFine=dataInizio; document.getElementById('inputDataFin').value=dataFine;} aggiornaGiorni(); loadPrenotazioniRange(); };
-  row1.appendChild(l1); row1.appendChild(inp1);
-
-  var row2 = document.createElement('div'); row2.className='date-range-row';
+  var in1 = document.createElement('input'); in1.type='date'; in1.id='inputDataIn'; in1.value=dataInizio;
+  in1.onchange = function(){ dataInizio=this.value; if(dataFine<dataInizio){dataFine=dataInizio; document.getElementById('inputDataFin').value=dataFine;} aggiornaGiorni(); loadPrenotazioniRange(); };
+  r1.appendChild(l1); r1.appendChild(in1);
+  var r2 = document.createElement('div'); r2.className='date-range-row';
   var l2 = document.createElement('div'); l2.className='date-range-label'; l2.textContent='Al';
-  var inp2 = document.createElement('input'); inp2.type='date'; inp2.id='inputDataFin'; inp2.value=dataFine;
-  inp2.onchange = function(){ dataFine=this.value; if(dataFine<dataInizio){dataFine=dataInizio; this.value=dataFine;} aggiornaGiorni(); loadPrenotazioniRange(); };
-  row2.appendChild(l2); row2.appendChild(inp2);
-
-  var giorniBadge = document.createElement('div'); giorniBadge.className='giorni-badge'; giorniBadge.id='giorniBadge';
-  var ng = numGiorni(dataInizio, dataFine);
-  giorniBadge.textContent = ng === 1 ? '1 giorno' : ng + ' giorni';
-
-  drBar.appendChild(row1); drBar.appendChild(row2); drBar.appendChild(giorniBadge);
+  var in2 = document.createElement('input'); in2.type='date'; in2.id='inputDataFin'; in2.value=dataFine;
+  in2.onchange = function(){ dataFine=this.value; if(dataFine<dataInizio){dataFine=dataInizio;this.value=dataFine;} aggiornaGiorni(); loadPrenotazioniRange(); };
+  r2.appendChild(l2); r2.appendChild(in2);
+  var gBadge = document.createElement('div'); gBadge.className='giorni-badge'; gBadge.id='giorniBadge';
+  var ng0 = numGiorni(dataInizio,dataFine);
+  gBadge.textContent = ng0===1?'1 giorno':ng0+' giorni';
+  drBar.appendChild(r1); drBar.appendChild(r2); drBar.appendChild(gBadge);
 
   // ZONA
   var zonaSel = document.createElement('div'); zonaSel.className='zona-selector';
@@ -354,277 +543,195 @@ function renderApp() {
 
   // LEGENDA
   var leg = document.createElement('div'); leg.className='legenda';
-  leg.innerHTML='<div class="leg-item"><div class="leg-dot" style="background:var(--free)"></div> Libero</div><div class="leg-item"><div class="leg-dot" style="background:var(--family)"></div> Family</div><div class="leg-item"><div class="leg-dot" style="background:var(--booked)"></div> Occupato</div><div class="leg-item"><div class="leg-dot" style="background:#F4A261"></div> Parz. occupato</div>';
+  leg.innerHTML='<div class="leg-item"><div class="leg-dot" style="background:var(--free)"></div> Libero</div><div class="leg-item"><div class="leg-dot" style="background:var(--family)"></div> Family</div><div class="leg-item"><div class="leg-dot" style="background:var(--booked)"></div> Occupato</div><div class="leg-item"><div class="leg-dot" style="background:#F4A261"></div> Parz.</div>';
 
   var mapW = document.createElement('div'); mapW.id='mapWrapper';
-
-  div.appendChild(drBar); div.appendChild(zonaSel); div.appendChild(leg); div.appendChild(mapW);
+  main.appendChild(drBar); main.appendChild(zonaSel); main.appendChild(leg); main.appendChild(mapW);
+  root.appendChild(main);
   loadPrenotazioniRange();
 }
 
 function aggiornaGiorni() {
   var el = document.getElementById('giorniBadge');
   if (!el) return;
-  var ng = numGiorni(dataInizio, dataFine);
-  el.textContent = ng === 1 ? '1 giorno' : ng + ' giorni';
+  var ng = numGiorni(dataInizio,dataFine);
+  el.textContent = ng===1?'1 giorno':ng+' giorni';
 }
 
 function setZona(z) {
   zonaAttiva = z;
-  var nb = document.getElementById('zonaBtnNormale');
-  var fb = document.getElementById('zonaBtnFamily');
-  if (nb) nb.className = 'zona-btn' + (z==='normale'?' active-normal':'');
-  if (fb) fb.className = 'zona-btn' + (z==='family'?' active-family':'');
+  var nb=document.getElementById('zonaBtnNormale');
+  var fb=document.getElementById('zonaBtnFamily');
+  if(nb) nb.className='zona-btn'+(z==='normale'?' active-normal':'');
+  if(fb) fb.className='zona-btn'+(z==='family'?' active-family':'');
   renderMap();
 }
 
-// ===== MAPPA =====
+async function loadPrenotazioniRange() {
+  var dates = getDateRange(dataInizio,dataFine);
+  prenotazioniMultiData = {};
+  try {
+    for (var i=0; i<dates.length; i++) {
+      var snap = await getDocs(query(collection(db,'prenotazioni'), where('data','==',dates[i])));
+      snap.forEach(function(d){
+        var dd=d.data();
+        if(!prenotazioniMultiData[dd.posto]) prenotazioniMultiData[dd.posto]=[];
+        prenotazioniMultiData[dd.posto].push(dd.data);
+      });
+    }
+  } catch(e){}
+  renderMap();
+}
+
 function renderMap() {
   var wrapper = document.getElementById('mapWrapper');
   if (!wrapper) return;
-  wrapper.innerHTML = '';
-  var rows = (config.rows||[]).filter(function(r){ return (r.zona||'normale')===zonaAttiva; });
-  if (!rows.length) {
-    wrapper.innerHTML='<div class="empty-state"><div class="empty-icon">🌊</div>Nessuna fila per questa zona</div>';
-    return;
-  }
-  var dates = getDateRange(dataInizio, dataFine);
-
-  var lbl = document.createElement('div');
-  lbl.className='map-section-label '+zonaAttiva;
-  lbl.textContent = zonaAttiva==='family'?'👨‍👩‍👧 Zona Family':'🌊 Zona Normale';
+  wrapper.innerHTML='';
+  var rows=(config.rows||[]).filter(function(r){ return (r.zona||'normale')===zonaAttiva; });
+  if (!rows.length) { wrapper.innerHTML='<div class="empty-state"><div class="empty-icon">🌊</div>Nessuna fila per questa zona</div>'; return; }
+  var dates=getDateRange(dataInizio,dataFine);
+  var lbl=document.createElement('div'); lbl.className='map-section-label '+zonaAttiva;
+  lbl.textContent=zonaAttiva==='family'?'👨‍👩‍👧 Zona Family':'🌊 Zona Normale';
   wrapper.appendChild(lbl);
-
-  var cont = document.createElement('div'); cont.className='map-container';
-  var info = document.createElement('div'); info.className='map-info';
-  var ng = numGiorni(dataInizio, dataFine);
-  info.textContent = ng===1 ? 'Disponibilita per il '+formatIT(dataInizio) : 'Disponibilita dal '+formatIT(dataInizio)+' al '+formatIT(dataFine);
+  var cont=document.createElement('div'); cont.className='map-container';
+  var info=document.createElement('div'); info.className='map-info';
+  var ng=numGiorni(dataInizio,dataFine);
+  info.textContent=ng===1?'Disponibilita per il '+formatIT(dataInizio):'Dal '+formatIT(dataInizio)+' al '+formatIT(dataFine);
   cont.appendChild(info);
-
-  var grid = document.createElement('div'); grid.className='map-grid';
+  var grid=document.createElement('div'); grid.className='map-grid';
   var maxC=0; rows.forEach(function(r){ if(r.count>maxC) maxC=r.count; });
-
-  var hRow = document.createElement('div'); hRow.className='map-row';
-  var sp = document.createElement('div'); sp.style.width='22px'; sp.style.flexShrink='0';
-  hRow.appendChild(sp);
-  for (var c=1; c<=maxC; c++) {
-    var cl=document.createElement('div'); cl.className='row-label'; cl.textContent=c;
-    hRow.appendChild(cl);
-  }
+  var hRow=document.createElement('div'); hRow.className='map-row';
+  var sp=document.createElement('div'); sp.style.width='22px'; sp.style.flexShrink='0'; hRow.appendChild(sp);
+  for(var c=1;c<=maxC;c++){ var cl=document.createElement('div'); cl.className='row-label'; cl.textContent=c; hRow.appendChild(cl); }
   grid.appendChild(hRow);
-
-  rows.forEach(function(row) {
+  rows.forEach(function(row){
     var rowEl=document.createElement('div'); rowEl.className='map-row';
-    var rl=document.createElement('div'); rl.className='row-label'; rl.textContent=row.name;
-    rowEl.appendChild(rl);
-    for (var ci=1; ci<=row.count; ci++) {
-      var posto = row.name+'-'+ci;
-      var dateOccupate = prenotazioniMultiData[posto] || [];
-      var tuttiOccupati = dates.length > 0 && dateOccupate.length >= dates.length;
-      var parzOccupato = dateOccupate.length > 0 && !tuttiOccupati;
+    var rl=document.createElement('div'); rl.className='row-label'; rl.textContent=row.name; rowEl.appendChild(rl);
+    for(var ci=1;ci<=row.count;ci++){
+      var posto=row.name+'-'+ci;
+      var dateOcc=prenotazioniMultiData[posto]||[];
+      var tuttiOcc=dates.length>0&&dateOcc.length>=dates.length;
+      var parzOcc=dateOcc.length>0&&!tuttiOcc;
       var div=document.createElement('div'); div.className='ombrellone';
-
-      if (selectedPostazione===posto) {
-        div.className+=' selected';
-        div.innerHTML='<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>';
-      } else if (tuttiOccupati) {
-        div.className+=' booked';
-        div.innerHTML='<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>';
-      } else if (parzOccupato) {
-        div.className+=' partial';
-        div.innerHTML='<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>';
-      } else {
+      if(selectedPostazione===posto){ div.className+=' selected'; div.innerHTML='<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>'; }
+      else if(tuttiOcc){ div.className+=' booked'; div.innerHTML='<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>'; }
+      else if(parzOcc){ div.className+=' partial'; div.innerHTML='<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>'; }
+      else{
         div.className+=(zonaAttiva==='family'?' free-family':' free');
         div.innerHTML='<div class="oi">⛱️</div><div class="on">'+row.name+ci+'</div>';
         (function(p){ div.onclick=function(){ apriModal(p); }; })(posto);
       }
       rowEl.appendChild(div);
     }
-    for (var ci2=row.count+1; ci2<=maxC; ci2++) {
-      var emp=document.createElement('div'); emp.className='ombrellone disabled';
-      emp.innerHTML='<div class="oi" style="opacity:.25">⛱️</div>';
-      rowEl.appendChild(emp);
-    }
+    for(var ci2=row.count+1;ci2<=maxC;ci2++){ var emp=document.createElement('div'); emp.className='ombrellone disabled'; emp.innerHTML='<div class="oi" style="opacity:.25">⛱️</div>'; rowEl.appendChild(emp); }
     grid.appendChild(rowEl);
   });
-  cont.appendChild(grid);
-  wrapper.appendChild(cont);
+  cont.appendChild(grid); wrapper.appendChild(cont);
 }
 
-// ===== MODAL PRENOTAZIONE =====
+// ===== MODAL =====
 function apriModal(posto) {
-  selectedPostazione = posto;
+  selectedPostazione=posto;
   renderMap();
-  var isFamily = zonaAttiva==='family';
-  var ng = numGiorni(dataInizio, dataFine);
-  var modal = document.getElementById('modalContent');
-  modal.innerHTML='';
-
-  // titolo
-  var title=document.createElement('div'); title.className='modal-title';
-  title.textContent='Prenota Ombrellone '+posto.replace('-','');
-  var sub=document.createElement('div'); sub.className='modal-sub';
-  sub.textContent='Nessun pagamento richiesto ora';
-  var badge=document.createElement('span');
-  badge.className='zona-badge '+(isFamily?'family':'normale');
-  badge.textContent=isFamily?'👨‍👩‍👧 Zona Family':'🌊 Zona Normale';
+  var isFamily=zonaAttiva==='family';
+  var ng=numGiorni(dataInizio,dataFine);
+  var modal=document.getElementById('modalContent'); modal.innerHTML='';
+  var title=document.createElement('div'); title.className='modal-title'; title.textContent='Prenota Ombrellone '+posto.replace('-','');
+  var sub=document.createElement('div'); sub.className='modal-sub'; sub.textContent='Prenotazione come: '+utente.nome+' '+utente.cognome;
+  var badge=document.createElement('span'); badge.className='zona-badge '+(isFamily?'family':'normale'); badge.textContent=isFamily?'👨‍👩‍👧 Zona Family':'🌊 Zona Normale';
   modal.appendChild(title); modal.appendChild(sub); modal.appendChild(badge);
-
-  // date
-  var dateDisp=document.createElement('div'); dateDisp.className='field';
-  var dl=document.createElement('label'); dl.textContent='Periodo';
-  var dd=document.createElement('div'); dd.className='field-display';
-  dd.textContent = ng===1 ? '📅 '+formatIT(dataInizio) : '📅 '+formatIT(dataInizio)+' → '+formatIT(dataFine)+' ('+ng+' giorni)';
-  dateDisp.appendChild(dl); dateDisp.appendChild(dd);
+  var dateDisp=document.createElement('div'); dateDisp.className='field-display';
+  dateDisp.textContent=ng===1?'📅 '+formatIT(dataInizio):'📅 '+formatIT(dataInizio)+' → '+formatIT(dataFine)+' ('+ng+' giorni)';
   modal.appendChild(dateDisp);
-
   // attrezzature
-  var attrezzature = config.attrezzature || [];
-  if (attrezzature.length > 0) {
+  var attrezzature=config.attrezzature||[];
+  if(attrezzature.length>0){
     var attrBox=document.createElement('div'); attrBox.className='attrezzature-box';
     var attrTitle=document.createElement('div'); attrTitle.className='attr-title'; attrTitle.textContent='Scegli le attrezzature';
     attrBox.appendChild(attrTitle);
-    attrezzature.forEach(function(attr) {
+    attrezzature.forEach(function(attr){
+      var isOmb=attr.id===(attrezzature[0]?attrezzature[0].id:'');
       var item=document.createElement('div'); item.className='attr-item';
       var left=document.createElement('div');
-      var name=document.createElement('div'); name.className='attr-name'; name.textContent=attr.icona+' '+attr.nome;
+      var name=document.createElement('div'); name.className='attr-name'; name.textContent=attr.icona+' '+attr.nome+(isOmb?' (max 1)':'');
       var price=document.createElement('div'); price.className='attr-price'; price.textContent=formatEuro(attr.prezzoBase)+'/giorno';
       left.appendChild(name); left.appendChild(price);
       var qty=document.createElement('div'); qty.className='attr-qty';
       var btnM=document.createElement('button'); btnM.className='btn-minus'; btnM.textContent='−';
-      var num=document.createElement('div'); num.className='attr-qty-num'; num.id='qty-'+attr.id; num.textContent=qtaAttr[attr.id]||0;
+      var numEl=document.createElement('div'); numEl.className='attr-qty-num'; numEl.id='qty-'+attr.id; numEl.textContent=qtaAttr[attr.id]||0;
       var btnP=document.createElement('button'); btnP.className='btn-plus'; btnP.textContent='+';
-      (function(a, numEl) {
-        btnM.onclick=function(){
-          if ((qtaAttr[a.id]||0)>0) { qtaAttr[a.id]--; numEl.textContent=qtaAttr[a.id]; aggiornaTotale(posto); }
-        };
+      (function(a,el,isFirst){
+        btnM.onclick=function(){ if((qtaAttr[a.id]||0)>0){qtaAttr[a.id]--;el.textContent=qtaAttr[a.id];aggiornaTotale(posto);} };
         btnP.onclick=function(){
-          // primo elemento (ombrellone) max 1
-          var isFirst = config.attrezzature && config.attrezzature[0] && config.attrezzature[0].id === a.id;
-          var max = isFirst ? 1 : 99;
-          if ((qtaAttr[a.id]||0) < max) {
-            qtaAttr[a.id]=(qtaAttr[a.id]||0)+1; numEl.textContent=qtaAttr[a.id]; aggiornaTotale(posto);
-          } else if (isFirst) {
-            showToast('Puoi prenotare solo 1 ombrellone');
-          }
+          var max=isFirst?1:99;
+          if((qtaAttr[a.id]||0)<max){qtaAttr[a.id]=(qtaAttr[a.id]||0)+1;el.textContent=qtaAttr[a.id];aggiornaTotale(posto);}
+          else if(isFirst){showToast('Puoi prenotare solo 1 ombrellone');}
         };
-      })(attr, num);
-      qty.appendChild(btnM); qty.appendChild(num); qty.appendChild(btnP);
-      item.appendChild(left); item.appendChild(qty);
-      attrBox.appendChild(item);
+      })(attr,numEl,isOmb);
+      qty.appendChild(btnM); qty.appendChild(numEl); qty.appendChild(btnP);
+      item.appendChild(left); item.appendChild(qty); attrBox.appendChild(item);
     });
     modal.appendChild(attrBox);
   }
-
-  // totale
   var totBox=document.createElement('div'); totBox.className='totale-box'; totBox.id='totaleBox';
-  aggiornaBoxTotale(totBox, posto);
-  modal.appendChild(totBox);
-
-  // campi form
-  function mkField(lbl, id, type, ph, ac) {
-    var f=document.createElement('div'); f.className='field';
-    var l=document.createElement('label'); l.textContent=lbl;
-    var i=document.createElement('input'); i.type=type; i.id=id; i.placeholder=ph; i.autocomplete=ac||'';
-    f.appendChild(l); f.appendChild(i); return f;
-  }
-  modal.appendChild(mkField('Nome','fNome','text','Mario','given-name'));
-  modal.appendChild(mkField('Cognome','fCognome','text','Rossi','family-name'));
-  modal.appendChild(mkField('Cellulare','fTel','tel','+39 333 1234567','tel'));
-  modal.appendChild(mkField('La tua Email','fEmail','email','mario@email.com','email'));
-
-  var btnConf=document.createElement('button');
-  btnConf.className='btn-prenota'+(isFamily?' family-mode':'');
-  btnConf.textContent='Conferma Prenotazione';
-  btnConf.onclick=confermaPrenota;
-  var btnAnn=document.createElement('button'); btnAnn.className='btn-annulla'; btnAnn.textContent='Annulla';
-  btnAnn.onclick=chiudiModal;
+  aggiornaTotaleBox(totBox,posto); modal.appendChild(totBox);
+  var btnConf=document.createElement('button'); btnConf.className='btn-prenota'+(isFamily?' family-mode':''); btnConf.textContent='Conferma Prenotazione'; btnConf.onclick=confermaPrenota;
+  var btnAnn=document.createElement('button'); btnAnn.className='btn-annulla'; btnAnn.textContent='Annulla'; btnAnn.onclick=chiudiModal;
   modal.appendChild(btnConf); modal.appendChild(btnAnn);
-
   document.getElementById('modalOverlay').className='modal-overlay open';
-  setTimeout(function(){ var el=document.getElementById('fNome'); if(el) el.focus(); },300);
+  setTimeout(function(){},300);
 }
 
-function aggiornaBoxTotale(box, posto) {
-  if (!box) { box=document.getElementById('totaleBox'); }
-  if (!box) return;
-  var dates=getDateRange(dataInizio,dataFine);
-  var tot=calcolaTotale(posto||selectedPostazione, dates);
-  var ng=dates.length;
+function aggiornaTotaleBox(box,posto){
   box.innerHTML='';
+  var dates=getDateRange(dataInizio,dataFine);
+  var tot=calcolaTotale(posto||selectedPostazione,dates);
+  var ng=dates.length;
   var lbl=document.createElement('div'); lbl.className='totale-label'; lbl.textContent='Totale stimato';
   var val=document.createElement('div'); val.className='totale-value'; val.textContent=formatEuro(tot);
-  var det=document.createElement('div'); det.className='totale-detail'; det.textContent=ng+(ng===1?' giorno':' giorni')+' · prezzi indicativi, possono variare';
+  var det=document.createElement('div'); det.className='totale-detail'; det.textContent=ng+(ng===1?' giorno':' giorni')+' - prezzi indicativi';
   box.appendChild(lbl); box.appendChild(val); box.appendChild(det);
 }
 
-function aggiornaTotale(posto) {
-  aggiornaBoxTotale(null, posto);
-}
+function aggiornaTotale(posto){ aggiornaTotaleBox(document.getElementById('totaleBox'),posto); }
 
-function chiudiModal() {
+function chiudiModal(){
   document.getElementById('modalOverlay').className='modal-overlay';
-  selectedPostazione=null;
-  renderMap();
+  selectedPostazione=null; renderMap();
 }
 
-async function confermaPrenota() {
-  var nome=(document.getElementById('fNome').value||'').trim();
-  var cognome=(document.getElementById('fCognome').value||'').trim();
-  var tel=(document.getElementById('fTel').value||'').trim();
-  var email=(document.getElementById('fEmail').value||'').trim();
-  var posto=selectedPostazione;
-  var zona=zonaAttiva;
-  if (!nome||!cognome||!tel||!email) { showToast('Compila tutti i campi'); return; }
-  if (!posto) { chiudiModal(); return; }
-
+async function confermaPrenota(){
+  var posto=selectedPostazione, zona=zonaAttiva;
+  if(!posto){ chiudiModal(); return; }
   var btn=document.querySelector('#modalContent .btn-prenota');
-  if (btn) { btn.disabled=true; btn.textContent='Salvataggio...'; }
-
-  var codice=generaCodice();
-  var ts=new Date().toISOString();
+  if(btn){btn.disabled=true;btn.textContent='Salvataggio...';}
+  var codice=generaCodice(), ts=new Date().toISOString();
   var dates=getDateRange(dataInizio,dataFine);
   var totale=calcolaTotale(posto,dates);
-
-  // salva attrezzature scelte
   var attrScelte=[];
-  var attrezzature=config.attrezzature||[];
-  for (var i=0; i<attrezzature.length; i++) {
-    if ((qtaAttr[attrezzature[i].id]||0)>0) {
-      attrScelte.push({id:attrezzature[i].id,nome:attrezzature[i].nome,qty:qtaAttr[attrezzature[i].id]});
-    }
-  }
-
-  var prenotazione = {
-    codice:codice, nome:nome, cognome:cognome, tel:tel, email:email, ts:ts,
-    checkin:false, zona:zona, dataInizio:dataInizio, dataFine:dataFine,
-    data:dataInizio, posto:posto, totale:totale, attrezzature:attrScelte,
-    numGiorni:dates.length
+  (config.attrezzature||[]).forEach(function(a){ if((qtaAttr[a.id]||0)>0) attrScelte.push({id:a.id,nome:a.nome,qty:qtaAttr[a.id]}); });
+  var prenotazione={
+    codice:codice, nome:utente.nome, cognome:utente.cognome, tel:utente.tel, email:utente.email,
+    username:utente.username, uid:utente.uid,
+    ts:ts, checkin:false, zona:zona, dataInizio:dataInizio, dataFine:dataFine,
+    data:dataInizio, posto:posto, totale:totale, attrezzature:attrScelte, numGiorni:dates.length
   };
-
-  var tid=setTimeout(function(){
-    showToast('Connessione lenta. Riprova.');
-    if (btn) { btn.disabled=false; btn.textContent='Conferma Prenotazione'; }
-  }, 12000);
-
+  var tid=setTimeout(function(){ showToast('Connessione lenta. Riprova.'); if(btn){btn.disabled=false;btn.textContent='Conferma Prenotazione';} },12000);
   try {
-    // salva una prenotazione per ogni giorno del range
-    for (var di=0; di<dates.length; di++) {
-      var docId=dates[di]+'_'+posto;
-      await setDoc(doc(db,'prenotazioni',docId), Object.assign({}, prenotazione, {data:dates[di]}));
+    for(var di=0;di<dates.length;di++){
+      await setDoc(doc(db,'prenotazioni',dates[di]+'_'+posto), Object.assign({},prenotazione,{data:dates[di]}));
     }
     clearTimeout(tid);
     selectedPostazione=null;
-    mostraConferma(posto,codice,nome,cognome,tel,email,zona,totale,dates);
-  } catch(e) {
+    mostraConferma(posto,codice,zona,totale,dates);
+  } catch(e){
     clearTimeout(tid);
     showToast('Errore: '+(e.code||'riprova'));
-    if (btn) { btn.disabled=false; btn.textContent='Conferma Prenotazione'; }
+    if(btn){btn.disabled=false;btn.textContent='Conferma Prenotazione';}
   }
 }
 
-// ===== CONFERMA =====
-function mostraConferma(posto,codice,nome,cognome,tel,email,zona,totale,dates) {
+function mostraConferma(posto,codice,zona,totale,dates){
   var postazione=posto.replace('-','');
   var ora=new Date().toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});
   var isFamily=zona==='family';
@@ -632,89 +739,67 @@ function mostraConferma(posto,codice,nome,cognome,tel,email,zona,totale,dates) {
   var emailGestore=(config&&config.emailGestore)?config.emailGestore:'';
   var ng=dates.length;
   var periodoLabel=ng===1?formatIT(dates[0]):formatIT(dates[0])+' - '+formatIT(dates[dates.length-1]);
-
-  var modal=document.getElementById('modalContent');
-  modal.innerHTML='';
-
+  var modal=document.getElementById('modalContent'); modal.innerHTML='';
   var box=document.createElement('div'); box.className='conf-box';
   box.innerHTML='<div class="conf-icon">✅</div><div class="conf-title">Prenotazione Confermata!</div><div class="conf-sub">Mostra il barcode alla cassa</div>';
   modal.appendChild(box);
-
   var codBox=document.createElement('div'); codBox.className='codice-box';
   var codLbl=document.createElement('div'); codLbl.className='codice-label'; codLbl.textContent='Il tuo Codice';
   var codVal=document.createElement('div'); codVal.className='codice-value'; codVal.textContent=codice;
   var bcWrap=document.createElement('div'); bcWrap.style.cssText='margin:14px 0 6px;overflow-x:auto;text-align:center';
-  var bcCanvas=document.createElement('canvas'); bcCanvas.id='barcodeCanvas';
-  bcWrap.appendChild(bcCanvas);
+  var bcCanvas=document.createElement('canvas'); bcCanvas.id='barcodeCanvas'; bcWrap.appendChild(bcCanvas);
   var codInfo=document.createElement('div'); codInfo.className='codice-info';
   codInfo.innerHTML='⛱️ Ombrellone '+postazione+' &middot; '+zonaLabel+'<br>📅 '+periodoLabel+'<br>💰 Totale: <strong>'+formatEuro(totale)+'</strong>';
   codBox.appendChild(codLbl); codBox.appendChild(codVal); codBox.appendChild(bcWrap); codBox.appendChild(codInfo);
   modal.appendChild(codBox);
-
   var det=document.createElement('div'); det.className='det-box';
-  det.innerHTML='👤 <strong>'+nome+' '+cognome+'</strong><br>📱 '+tel+'<br>✉️ '+email+'<br>⏰ Prenotato alle '+ora;
+  det.innerHTML='👤 <strong>'+utente.nome+' '+utente.cognome+'</strong><br>📱 '+utente.tel+'<br>✉️ '+utente.email+'<br>⏰ Prenotato alle '+ora;
   modal.appendChild(det);
-
-  var btnSalva=document.createElement('button'); btnSalva.className='btn-blu';
-  btnSalva.textContent='📥 Salva Barcode (PNG)';
-  (function(c,n,cog,pl,post){ btnSalva.onclick=function(){ scaricaBarcode(c,n,cog,pl,post); }; })(codice,nome,cognome,periodoLabel,postazione);
+  var btnSalva=document.createElement('button'); btnSalva.className='btn-blu'; btnSalva.textContent='📥 Salva Barcode (PNG)';
+  (function(c,n,cog,pl,post){ btnSalva.onclick=function(){ scaricaBarcode(c,n,cog,pl,post); }; })(codice,utente.nome,utente.cognome,periodoLabel,postazione);
   modal.appendChild(btnSalva);
-
-  if (emailGestore) {
+  if(emailGestore){
     var subject='Prenotazione '+codice+' - Omb. '+postazione+' - '+periodoLabel;
-    var body='Nuova prenotazione!\n\nCodice: '+codice+'\nPeriodo: '+periodoLabel+' ('+ng+' giorni)\nOmbrellone: '+postazione+'\nZona: '+(isFamily?'Family':'Normale')+'\nNome: '+nome+' '+cognome+'\nCellulare: '+tel+'\nEmail: '+email+'\nTotale stimato: '+formatEuro(totale)+'\nOra: '+ora;
+    var body='Nuova prenotazione!\n\nCodice: '+codice+'\nPeriodo: '+periodoLabel+'\nOmbrellone: '+postazione+'\nCliente: '+utente.nome+' '+utente.cognome+'\nTel: '+utente.tel+'\nEmail: '+utente.email+'\nTotale: '+formatEuro(totale);
     var btnEmail=document.createElement('a'); btnEmail.className='btn-verde';
     btnEmail.href='mailto:'+emailGestore+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
     btnEmail.textContent='📧 Invia conferma al gestore';
     modal.appendChild(btnEmail);
   }
-
-  var btnCh=document.createElement('button'); btnCh.className='btn-chiudi'; btnCh.textContent='Chiudi';
-  btnCh.onclick=chiudiModal;
-  modal.appendChild(btnCh);
-
-  setTimeout(function(){
-    var bc=document.getElementById('barcodeCanvas');
-    if (bc) try{ drawBarcode(bc,codice); }catch(e){}
-  },150);
+  var btnCh=document.createElement('button'); btnCh.className='btn-chiudi'; btnCh.textContent='Chiudi'; btnCh.onclick=chiudiModal; modal.appendChild(btnCh);
+  setTimeout(function(){ var bc=document.getElementById('barcodeCanvas'); if(bc) try{drawBarcode(bc,codice);}catch(e){} },150);
 }
 
-// ===== BARCODE Code128 =====
-function drawBarcode(canvas, text) {
+// ===== BARCODE =====
+function drawBarcode(canvas,text){
   var CHARS=' !"#$%&\'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~';
   var PAT=["11011001100","11001101100","11001100110","10010011000","10010001100","10001001100","10011001000","10011000100","10001100100","11001001000","11001000100","11000100100","10110011100","10011011100","10011001110","10111001100","10011101100","10011100110","11001110010","11001011100","11001001110","11011100100","11001110100","11101101110","11101001100","11100101100","11100100110","11101100100","11100110100","11100110010","11011011000","11011000110","11000110110","10100011000","10001011000","10001000110","10110001000","10001101000","10001100010","11010001000","11000101000","11000100010","10110111000","10110001110","10001101110","10111011000","10111000110","10001110110","11101110110","11010001110","11000101110","11011101000","11011100010","11011101110","11101011000","11101000110","11100010110","11101101000","11101100010","11100011010","11101111010","11001000010","11110001010","10100110000","10100001100","10010110000","10010000110","10000101100","10000100110","10110010000","10110000100","10011010000","10011000010","10000110100","10000110010","11000010010","11001010000","11110111010","11000010100","10001111010","10100111100","10010111100","10010011110","10111100100","10011110100","10011110010","11110100100","11110010100","11110010010","11011011110","11011110110","11110110110","10101111000","10100011110","10001011110","10111101000","10111100010","11110101000","11110100010","10111011110","10111101110","11101011110","11110101110","11010000100","11010010000","11010011100","1100011101011"];
   var codes=[104];
-  for (var i=0;i<text.length;i++){ var idx=CHARS.indexOf(text[i]); codes.push(idx<0?0:idx); }
-  var chk=codes[0];
-  for (var j=1;j<codes.length;j++) chk+=j*codes[j];
+  for(var i=0;i<text.length;i++){var idx=CHARS.indexOf(text[i]);codes.push(idx<0?0:idx);}
+  var chk=codes[0]; for(var j=1;j<codes.length;j++) chk+=j*codes[j];
   codes.push(chk%103); codes.push(106);
-  var bars='';
-  for (var k=0;k<codes.length;k++) bars+=PAT[codes[k]];
-  var bw=3,bh=80,mg=10,fs=16;
-  var w=bars.length*bw+mg*2, h=bh+mg*2+fs+4;
+  var bars=''; for(var k=0;k<codes.length;k++) bars+=PAT[codes[k]];
+  var bw=3,bh=80,mg=10,fs=16,w=bars.length*bw+mg*2,h=bh+mg*2+fs+4;
   canvas.width=w; canvas.height=h;
   var ctx=canvas.getContext('2d');
   ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,w,h);
   ctx.fillStyle='#005F92';
-  for (var bi=0;bi<bars.length;bi++){ if(bars[bi]==='1') ctx.fillRect(mg+bi*bw,mg,bw,bh); }
+  for(var bi=0;bi<bars.length;bi++){if(bars[bi]==='1') ctx.fillRect(mg+bi*bw,mg,bw,bh);}
   ctx.fillStyle='#1A1A2E'; ctx.font='bold '+fs+'px monospace'; ctx.textAlign='center';
   ctx.fillText(text,w/2,bh+mg+fs);
 }
 
-function scaricaBarcode(codice,nome,cognome,periodoLabel,postazione) {
+function scaricaBarcode(codice,nome,cognome,periodoLabel,postazione){
   var bcCanvas=document.createElement('canvas');
-  try{ drawBarcode(bcCanvas,codice); }catch(e){ return; }
+  try{drawBarcode(bcCanvas,codice);}catch(e){return;}
   var final=document.createElement('canvas');
   final.width=Math.max(bcCanvas.width,520); final.height=bcCanvas.height+36;
   var ctx=final.getContext('2d');
   ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,final.width,final.height);
   ctx.drawImage(bcCanvas,Math.round((final.width-bcCanvas.width)/2),0);
   ctx.fillStyle='#1A1A2E'; ctx.font='bold 13px Arial'; ctx.textAlign='center';
-  ctx.fillText(nome+' '+cognome+'  -  Omb. '+postazione+'  -  '+periodoLabel, final.width/2, bcCanvas.height+24);
-  var link=document.createElement('a');
-  link.download='prenotazione-'+codice+'.png';
-  link.href=final.toDataURL('image/png');
-  link.click();
+  ctx.fillText(nome+' '+cognome+'  -  Omb. '+postazione+'  -  '+periodoLabel,final.width/2,bcCanvas.height+24);
+  var link=document.createElement('a'); link.download='prenotazione-'+codice+'.png'; link.href=final.toDataURL('image/png'); link.click();
 }
 
 window.chiudiModal=chiudiModal;
