@@ -499,7 +499,14 @@ function apriModal(posto) {
           if ((qtaAttr[a.id]||0)>0) { qtaAttr[a.id]--; numEl.textContent=qtaAttr[a.id]; aggiornaTotale(posto); }
         };
         btnP.onclick=function(){
-          qtaAttr[a.id]=(qtaAttr[a.id]||0)+1; numEl.textContent=qtaAttr[a.id]; aggiornaTotale(posto);
+          // primo elemento (ombrellone) max 1
+          var isFirst = config.attrezzature && config.attrezzature[0] && config.attrezzature[0].id === a.id;
+          var max = isFirst ? 1 : 99;
+          if ((qtaAttr[a.id]||0) < max) {
+            qtaAttr[a.id]=(qtaAttr[a.id]||0)+1; numEl.textContent=qtaAttr[a.id]; aggiornaTotale(posto);
+          } else if (isFirst) {
+            showToast('Puoi prenotare solo 1 ombrellone');
+          }
         };
       })(attr, num);
       qty.appendChild(btnM); qty.appendChild(num); qty.appendChild(btnP);
