@@ -244,6 +244,29 @@
   <div id="clientiLista"></div>
 </div>
 
+<!-- SCREEN CALENDARIO -->
+<div class="screen" id="screen-calendario">
+  <div class="cassa-header">
+    <div class="cassa-title">📅 Occupazione Settimanale</div>
+    <div class="cassa-sub">Panoramica disponibilità per settimana</div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;background:white;border-radius:10px;padding:12px 14px;box-shadow:var(--shadow)">
+    <button id="calPrevBtn" style="background:#EBF7FC;color:var(--sea);border:none;padding:8px 14px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">← Prec.</button>
+    <div id="calWeekLabel" style="font-size:14px;font-weight:700;color:var(--text)"></div>
+    <button id="calNextBtn" style="background:#EBF7FC;color:var(--sea);border:none;padding:8px 14px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Succ. →</button>
+  </div>
+  <!-- legenda -->
+  <div style="display:flex;gap:12px;background:white;padding:10px 14px;border-radius:10px;margin-bottom:14px;box-shadow:var(--shadow);flex-wrap:wrap">
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-light)"><div style="width:14px;height:14px;border-radius:3px;background:#48CAE4"></div> &lt;50% pieno</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-light)"><div style="width:14px;height:14px;border-radius:3px;background:#F4D35E"></div> 50-80%</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-light)"><div style="width:14px;height:14px;border-radius:3px;background:#E76F51"></div> &gt;80%</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text-light)"><div style="width:14px;height:14px;border-radius:3px;background:#D0D8E0"></div> Nessuna pren.</div>
+  </div>
+  <div id="calGrid"></div>
+  <!-- riepilogo settimana -->
+  <div id="calSummary"></div>
+</div>
+
 <!-- CONFIRM -->
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-box">
@@ -272,6 +295,7 @@
   <button class="tab" onclick="showTab('statistiche')">📊 Stats</button>
   <button class="tab" onclick="showTab('config')">⚙️ Config</button>
   <button class="tab" onclick="showTab('clienti')">👥 Clienti</button>
+  <button class="tab" onclick="showTab('calendario')">📅 Calendario</button>
 </div>
 
 <!-- CASSA -->
@@ -1204,6 +1228,162 @@ function renderBarcode(codice, canvasId) {
 }
 
 // ===== CONFIRM =====
+// ===== CALENDARIO OCCUPAZIONE =====
+var calStartDate = null;
+
+function getMonday(d) {
+  var dt = new Date(d);
+  var day = dt.getDay();
+  var diff = dt.getDate() - day + (day === 0 ? -6 : 1);
+  dt.setDate(diff);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+
+function dateToStr(d) {
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);
+}
+
+function strToDate(s) {
+  return new Date(s+'T12:00:00');
+}
+
+function formatDataShort(s) {
+  var p = s.split('-');
+  return p[2]+'/'+p[1];
+}
+
+function initCalendario() {
+  if (!calStartDate) calStartDate = getMonday(new Date());
+  document.getElementById('calPrevBtn').onclick = function() {
+    calStartDate.setDate(calStartDate.getDate()-7);
+    renderCalendario();
+  };
+  document.getElementById('calNextBtn').onclick = function() {
+    calStartDate.setDate(calStartDate.getDate()+7);
+    renderCalendario();
+  };
+  renderCalendario();
+}
+
+async function renderCalendario() {
+  var grid = document.getElementById('calGrid');
+  var summary = document.getElementById('calSummary');
+  grid.innerHTML = '<div class="loading-inline">Caricamento...</div>';
+  summary.innerHTML = '';
+
+  // calcola 7 giorni della settimana
+  var days = [];
+  for (var i=0; i<7; i++) {
+    var d = new Date(calStartDate);
+    d.setDate(calStartDate.getDate()+i);
+    days.push(dateToStr(d));
+  }
+
+  // label settimana
+  var weekLabel = document.getElementById('calWeekLabel');
+  weekLabel.textContent = formatDataShort(days[0]) + ' – ' + formatDataShort(days[6]);
+
+  // totale posti
+  var totPosti = 0;
+  (config.rows||[]).forEach(function(r){ totPosti += r.count; });
+
+  // carica prenotazioni per tutti i 7 giorni
+  var prenPerGiorno = {};
+  days.forEach(function(d){ prenPerGiorno[d] = 0; });
+  try {
+    for (var di=0; di<days.length; di++) {
+      var snap = await getDocs(query(collection(db,'prenotazioni'), where('data','==',days[di])));
+      prenPerGiorno[days[di]] = snap.size;
+    }
+  } catch(e) {}
+
+  // render griglia
+  grid.innerHTML = '';
+  var GIORNI = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+  days.forEach(function(day, i) {
+    var pren = prenPerGiorno[day];
+    var perc = totPosti > 0 ? Math.round((pren/totPosti)*100) : 0;
+    var liberi = totPosti - pren;
+    var oggi = dateToStr(new Date());
+    var isOggi = day === oggi;
+
+    // colore
+    var colBg, colText;
+    if (pren === 0) { colBg='#D0D8E0'; colText='#5A6A7A'; }
+    else if (perc < 50) { colBg='#E0F4FB'; colText='#0077B6'; }
+    else if (perc < 80) { colBg='#FEF3E0'; colText='#E8871A'; }
+    else { colBg='#FEE2DC'; colText='#E76F51'; }
+
+    var barColor;
+    if (pren === 0) barColor='#C0CAD4';
+    else if (perc < 50) barColor='#48CAE4';
+    else if (perc < 80) barColor='#F4D35E';
+    else barColor='#E76F51';
+
+    var card = document.createElement('div');
+    card.style.cssText = 'background:white;border-radius:12px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);' + (isOggi ? 'border:2px solid var(--sea)' : 'border:2px solid transparent');
+
+    var header = document.createElement('div');
+    header.style.cssText = 'display:flex;align-items:center;justify-content:space-between;margin-bottom:10px';
+
+    var dayLabel = document.createElement('div');
+    dayLabel.innerHTML = '<div style="font-size:15px;font-weight:800;color:var(--text)">' + GIORNI[i] + (isOggi ? ' <span style="font-size:11px;color:var(--sea);font-weight:700">• oggi</span>' : '') + '</div><div style="font-size:12px;color:var(--text-light)">' + formatDataShort(day) + '</div>';
+
+    var percBadge = document.createElement('div');
+    percBadge.style.cssText = 'background:'+colBg+';color:'+colText+';padding:6px 12px;border-radius:20px;font-size:14px;font-weight:800';
+    percBadge.textContent = perc + '%';
+
+    header.appendChild(dayLabel); header.appendChild(percBadge);
+
+    // barra progresso
+    var barWrap = document.createElement('div');
+    barWrap.style.cssText = 'background:#EEF2F6;border-radius:6px;height:10px;margin-bottom:10px;overflow:hidden';
+    var barFill = document.createElement('div');
+    barFill.style.cssText = 'height:100%;border-radius:6px;background:'+barColor+';width:'+perc+'%;transition:width .4s';
+    barWrap.appendChild(barFill);
+
+    // numeri
+    var nums = document.createElement('div');
+    nums.style.cssText = 'display:flex;justify-content:space-between;font-size:13px';
+    nums.innerHTML = '<span style="color:var(--text-light)">⛱️ <strong style="color:var(--text)">'+pren+'</strong> prenotati</span><span style="color:var(--text-light)">🟢 <strong style="color:var(--green)">'+liberi+'</strong> liberi</span>';
+
+    card.appendChild(header); card.appendChild(barWrap); card.appendChild(nums);
+
+    // tasto vai alla data
+    var btnVai = document.createElement('button');
+    btnVai.style.cssText = 'width:100%;background:#EBF7FC;color:var(--sea);border:none;padding:8px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;margin-top:10px';
+    btnVai.textContent = 'Vedi prenotazioni →';
+    (function(d){ btnVai.onclick = function(){
+      showTab('cassa');
+      var el = document.getElementById('cassaData');
+      if (el) { el.value = d; listenCassa(d); }
+    }; })(day);
+    card.appendChild(btnVai);
+
+    grid.appendChild(card);
+  });
+
+  // riepilogo settimana
+  var totPren = 0;
+  days.forEach(function(d){ totPren += prenPerGiorno[d]; });
+  var maxPossibile = totPosti * 7;
+  var percMedia = maxPossibile > 0 ? Math.round((totPren/maxPossibile)*100) : 0;
+  var giornoTop = days.reduce(function(a,b){ return prenPerGiorno[a]>=prenPerGiorno[b]?a:b; });
+
+  summary.innerHTML = '';
+  var sumCard = document.createElement('div');
+  sumCard.style.cssText = 'background:white;border-radius:12px;padding:16px;box-shadow:var(--shadow);margin-top:4px';
+  sumCard.innerHTML =
+    '<div style="font-size:13px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">📊 Riepilogo Settimana</div>' +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">' +
+    '<div style="background:#EBF7FC;border-radius:10px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:800;color:var(--sea)">'+totPren+'</div><div style="font-size:11px;color:var(--text-light)">Prenotazioni totali</div></div>' +
+    '<div style="background:#EBF7FC;border-radius:10px;padding:12px;text-align:center"><div style="font-size:24px;font-weight:800;color:var(--sea)">'+percMedia+'%</div><div style="font-size:11px;color:var(--text-light)">Occupazione media</div></div>' +
+    '<div style="background:#E3F8EF;border-radius:10px;padding:12px;text-align:center;grid-column:span 2"><div style="font-size:13px;font-weight:700;color:var(--green)">🏆 Giorno più prenotato</div><div style="font-size:16px;font-weight:800;color:var(--text);margin-top:4px">'+GIORNI[days.indexOf(giornoTop)]+' '+formatDataShort(giornoTop)+' ('+prenPerGiorno[giornoTop]+' pren.)</div></div>' +
+    '</div>';
+  summary.appendChild(sumCard);
+}
+
 function openConfirm(title, sub, cb) {
   confirmCallback = cb;
   document.getElementById('confirmTitle').textContent = title;
