@@ -138,7 +138,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCJ4vGsoBwtf8tv5Bvj4s17UX2sqUl-ExA",
@@ -514,6 +514,15 @@ function avviaApp() {
   var root = document.getElementById('appRoot');
   root.innerHTML = '';
 
+  // TABS
+  var tabBar = document.createElement('div'); tabBar.style.cssText='display:flex;background:white;border-bottom:2px solid #DDE8F0;position:sticky;top:58px;z-index:90';
+  var tabMappa = document.createElement('button'); tabMappa.style.cssText='flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:600;border:none;background:none;border-bottom:3px solid var(--sea);color:var(--sea);cursor:pointer'; tabMappa.textContent='🗺️ Mappa'; tabMappa.id='tabMappa';
+  var tabMie = document.createElement('button'); tabMie.style.cssText='flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:600;border:none;background:none;border-bottom:3px solid transparent;color:#5A6A7A;cursor:pointer'; tabMie.textContent='📋 Mie Prenotazioni'; tabMie.id='tabMie';
+  tabMappa.onclick = function(){ switchTab('mappa'); };
+  tabMie.onclick = function(){ switchTab('mie'); };
+  tabBar.appendChild(tabMappa); tabBar.appendChild(tabMie);
+  root.appendChild(tabBar);
+
   var main = document.createElement('div'); main.className='main'; main.id='mainApp';
 
   // DATE RANGE
@@ -548,7 +557,31 @@ function avviaApp() {
   var mapW = document.createElement('div'); mapW.id='mapWrapper';
   main.appendChild(drBar); main.appendChild(zonaSel); main.appendChild(leg); main.appendChild(mapW);
   root.appendChild(main);
+
+  var mieScreen = document.createElement('div'); mieScreen.id='mieScreen'; mieScreen.style.display='none';
+  mieScreen.className='main';
+  root.appendChild(mieScreen);
+
   loadPrenotazioniRange();
+}
+
+function switchTab(tab) {
+  var tabMappa = document.getElementById('tabMappa');
+  var tabMie = document.getElementById('tabMie');
+  var mainApp = document.getElementById('mainApp');
+  var mieScreen = document.getElementById('mieScreen');
+  if (tab === 'mappa') {
+    tabMappa.style.cssText='flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:600;border:none;background:none;border-bottom:3px solid var(--sea);color:var(--sea);cursor:pointer';
+    tabMie.style.cssText='flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:600;border:none;background:none;border-bottom:3px solid transparent;color:#5A6A7A;cursor:pointer';
+    mainApp.style.display='block';
+    mieScreen.style.display='none';
+  } else {
+    tabMappa.style.cssText='flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:600;border:none;background:none;border-bottom:3px solid transparent;color:#5A6A7A;cursor:pointer';
+    tabMie.style.cssText='flex:1;padding:12px 8px;text-align:center;font-size:13px;font-weight:600;border:none;background:none;border-bottom:3px solid var(--sea);color:var(--sea);cursor:pointer';
+    mainApp.style.display='none';
+    mieScreen.style.display='block';
+    loadMiePrenotazioni();
+  }
 }
 
 function aggiornaGiorni() {
@@ -663,9 +696,11 @@ function apriModal(posto) {
       (function(a,el,isFirst){
         btnM.onclick=function(){ if((qtaAttr[a.id]||0)>0){qtaAttr[a.id]--;el.textContent=qtaAttr[a.id];aggiornaTotale(posto);} };
         btnP.onclick=function(){
-          var max=isFirst?1:99;
+          var isSecond = config.attrezzature && config.attrezzature[1] && config.attrezzature[1].id === a.id;
+          var max = isFirst ? 1 : (isSecond ? 3 : 99);
           if((qtaAttr[a.id]||0)<max){qtaAttr[a.id]=(qtaAttr[a.id]||0)+1;el.textContent=qtaAttr[a.id];aggiornaTotale(posto);}
           else if(isFirst){showToast('Puoi prenotare solo 1 ombrellone');}
+          else if(isSecond){showToast('Massimo 3 lettini per ombrellone');}
         };
       })(attr,numEl,isOmb);
       qty.appendChild(btnM); qty.appendChild(numEl); qty.appendChild(btnP);
@@ -768,6 +803,247 @@ function mostraConferma(posto,codice,zona,totale,dates){
   }
   var btnCh=document.createElement('button'); btnCh.className='btn-chiudi'; btnCh.textContent='Chiudi'; btnCh.onclick=chiudiModal; modal.appendChild(btnCh);
   setTimeout(function(){ var bc=document.getElementById('barcodeCanvas'); if(bc) try{drawBarcode(bc,codice);}catch(e){} },150);
+}
+
+// ===== MIE PRENOTAZIONI =====
+async function loadMiePrenotazioni() {
+  var screen = document.getElementById('mieScreen');
+  screen.innerHTML = '<div class="loading-screen" style="min-height:40vh"><div class="spinner"></div><div class="loading-text">Caricamento prenotazioni...</div></div>';
+  try {
+    var snap = await getDocs(query(collection(db,'prenotazioni'), where('uid','==',utente.uid)));
+    var prenMap = {};
+    snap.forEach(function(d) {
+      var p = d.data();
+      // raggruppa per codice (una prenotazione multigiorno ha piu doc)
+      if (!prenMap[p.codice]) prenMap[p.codice] = p;
+    });
+    var lista = Object.values(prenMap);
+    // ordina per dataInizio decrescente
+    lista.sort(function(a,b){ return (b.dataInizio||b.data||'').localeCompare(a.dataInizio||a.data||''); });
+    renderMiePrenotazioni(lista);
+  } catch(e) {
+    screen.innerHTML = '<div class="empty-state"><div class="empty-icon">⚠️</div>Errore caricamento</div>';
+  }
+}
+
+function canModify(p) {
+  // può modificare solo se mancano più di 24h alla data di arrivo
+  var arrivo = new Date((p.dataInizio||p.data)+'T08:00:00');
+  var ora = new Date();
+  var diffOre = (arrivo - ora) / (1000*60*60);
+  return diffOre > 24;
+}
+
+function renderMiePrenotazioni(lista) {
+  var screen = document.getElementById('mieScreen');
+  screen.innerHTML = '';
+  if (!lista.length) {
+    screen.innerHTML = '<div class="empty-state"><div class="empty-icon">🌊</div>Nessuna prenotazione trovata</div>';
+    return;
+  }
+  var oggi = todayStr();
+  lista.forEach(function(p) {
+    var card = document.createElement('div');
+    card.style.cssText = 'background:white;border-radius:12px;padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border-left:4px solid var(--sea)';
+    var postazione = (p.posto||'').replace('-','');
+    var ng = p.numGiorni || 1;
+    var periodoLabel = ng===1 ? formatIT(p.dataInizio||p.data) : formatIT(p.dataInizio||p.data)+' - '+formatIT(p.dataFine||p.data);
+    var zonaLabel = p.zona==='family'?'👨‍👩‍👧 Family':'🌊 Normale';
+    var puoModificare = canModify(p);
+    var isPast = (p.dataInizio||p.data) < oggi;
+
+    var stato = p.checkin ? '✅ Check-in effettuato' : (isPast ? '⏰ Passata' : '⏳ In attesa');
+    var statoColor = p.checkin ? '#2D9D78' : (isPast ? '#999' : '#E8871A');
+
+    // header card
+    var h = document.createElement('div');
+    h.style.cssText = 'display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px';
+    var hLeft = document.createElement('div');
+    hLeft.innerHTML = '<div style="font-size:16px;font-weight:800">⛱️ Ombrellone '+postazione+'</div><div style="font-size:12px;color:var(--text-light);margin-top:2px">'+zonaLabel+'</div>';
+    var hRight = document.createElement('div');
+    hRight.style.cssText = 'font-size:12px;font-weight:700;color:'+statoColor+';text-align:right';
+    hRight.textContent = stato;
+    h.appendChild(hLeft); h.appendChild(hRight); card.appendChild(h);
+
+    // dettagli
+    var det = document.createElement('div');
+    det.style.cssText = 'font-size:13px;color:var(--text-light);margin-bottom:10px;line-height:1.7';
+    det.innerHTML = '📅 '+periodoLabel+(ng>1?' ('+ng+' giorni)':'')+'<br>🔑 Codice: <strong style="font-family:monospace;color:var(--sea);letter-spacing:2px">'+p.codice+'</strong>';
+    card.appendChild(det);
+
+    // attrezzature
+    if (p.attrezzature && p.attrezzature.length) {
+      var attrDiv = document.createElement('div');
+      attrDiv.style.cssText = 'background:#F7FAFC;border-radius:8px;padding:10px 12px;margin-bottom:10px;font-size:13px';
+      p.attrezzature.forEach(function(a) {
+        var row = document.createElement('div');
+        row.style.cssText = 'display:flex;justify-content:space-between;padding:3px 0';
+        row.innerHTML = '<span>'+a.nome+'</span><span style="font-weight:700">x'+a.qty+'</span>';
+        attrDiv.appendChild(row);
+      });
+      card.appendChild(attrDiv);
+    }
+
+    // totale
+    if (p.totale) {
+      var tot = document.createElement('div');
+      tot.style.cssText = 'background:var(--sand);border-radius:8px;padding:10px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center';
+      tot.innerHTML = '<span style="font-size:13px;color:var(--text-light)">Totale stimato</span><span style="font-size:18px;font-weight:800;color:var(--sea)">'+parseFloat(p.totale).toFixed(2).replace('.',',')+' €</span>';
+      card.appendChild(tot);
+    }
+
+    // bottoni modifica/annulla (solo se non passata e non check-in e mancano >24h)
+    if (!isPast && !p.checkin && puoModificare) {
+      var btns = document.createElement('div'); btns.style.cssText='display:flex;gap:8px';
+      var btnMod = document.createElement('button');
+      btnMod.style.cssText='flex:1;background:#EBF7FC;color:var(--sea);border:none;padding:11px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer';
+      btnMod.textContent='✏️ Modifica';
+      var btnAnn = document.createElement('button');
+      btnAnn.style.cssText='flex:1;background:#FEE2DC;color:var(--booked);border:none;padding:11px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer';
+      btnAnn.textContent='🗑️ Annulla';
+      (function(pr){ btnMod.onclick=function(){ apriModificaCliente(pr); }; btnAnn.onclick=function(){ confermaAnnullaCliente(pr); }; })(p);
+      btns.appendChild(btnMod); btns.appendChild(btnAnn); card.appendChild(btns);
+    } else if (!isPast && !p.checkin && !puoModificare) {
+      var noMod = document.createElement('div');
+      noMod.style.cssText='font-size:12px;color:var(--text-light);text-align:center;padding:8px;background:#F7FAFC;border-radius:8px';
+      noMod.textContent='⏰ Modifiche non disponibili nelle 24h prima dell\'arrivo';
+      card.appendChild(noMod);
+    }
+    screen.appendChild(card);
+  });
+}
+
+var modificaClienteData = null;
+var modificaClienteQta = {};
+
+function apriModificaCliente(p) {
+  modificaClienteData = p;
+  modificaClienteQta = {};
+  var attrezzature = config.attrezzature || [];
+  var existing = p.attrezzature || [];
+  attrezzature.forEach(function(a) {
+    var found = existing.find(function(x){ return x.id===a.id; });
+    modificaClienteQta[a.id] = found ? found.qty : 0;
+  });
+
+  var modal = document.getElementById('modalContent');
+  modal.innerHTML = '';
+  var title = document.createElement('div'); title.className='modal-title'; title.textContent='Modifica Prenotazione';
+  var sub = document.createElement('div'); sub.className='modal-sub'; sub.textContent='⛱️ Ombrellone '+(p.posto||'').replace('-','')+' · '+(p.numGiorni||1)+' giorni';
+  modal.appendChild(title); modal.appendChild(sub);
+
+  var attrBox = document.createElement('div'); attrBox.className='attrezzature-box';
+  var attrTitle = document.createElement('div'); attrTitle.className='attr-title'; attrTitle.textContent='Attrezzature';
+  attrBox.appendChild(attrTitle);
+
+  attrezzature.forEach(function(attr) {
+    var isFirst = attrezzature[0] && attrezzature[0].id===attr.id;
+    var isSecond = attrezzature[1] && attrezzature[1].id===attr.id;
+    var item = document.createElement('div'); item.className='attr-item';
+    var left = document.createElement('div');
+    var name = document.createElement('div'); name.className='attr-name'; name.textContent=attr.icona+' '+attr.nome+(isFirst?' (max 1)':'')+(isSecond?' (max 3)':'');
+    var price = document.createElement('div'); price.className='attr-price'; price.textContent=formatEuro(attr.prezzoBase)+'/giorno';
+    left.appendChild(name); left.appendChild(price);
+    var qty = document.createElement('div'); qty.className='attr-qty';
+    var btnM = document.createElement('button'); btnM.className='btn-minus'; btnM.textContent='−';
+    var numEl = document.createElement('div'); numEl.className='attr-qty-num'; numEl.textContent=modificaClienteQta[attr.id]||0;
+    var btnP = document.createElement('button'); btnP.className='btn-plus'; btnP.textContent='+';
+    (function(a,el,f,s){
+      btnM.onclick=function(){if((modificaClienteQta[a.id]||0)>0){modificaClienteQta[a.id]--;el.textContent=modificaClienteQta[a.id];aggiornaModificaTotale();}};
+      btnP.onclick=function(){
+        var max=f?1:s?3:99;
+        if((modificaClienteQta[a.id]||0)<max){modificaClienteQta[a.id]=(modificaClienteQta[a.id]||0)+1;el.textContent=modificaClienteQta[a.id];aggiornaModificaTotale();}
+        else if(f){showToast('Max 1 ombrellone');}
+        else if(s){showToast('Max 3 lettini');}
+      };
+    })(attr,numEl,isFirst,isSecond);
+    qty.appendChild(btnM); qty.appendChild(numEl); qty.appendChild(btnP);
+    item.appendChild(left); item.appendChild(qty); attrBox.appendChild(item);
+  });
+  modal.appendChild(attrBox);
+
+  var totBox = document.createElement('div'); totBox.className='totale-box'; totBox.id='modClienteTotBox';
+  modal.appendChild(totBox);
+  aggiornaModificaTotale();
+
+  var btnSalva = document.createElement('button'); btnSalva.className='btn-prenota'; btnSalva.textContent='💾 Salva Modifiche';
+  btnSalva.onclick = salvaModificaCliente;
+  var btnAnn = document.createElement('button'); btnAnn.className='btn-annulla'; btnAnn.textContent='Annulla';
+  btnAnn.onclick = chiudiModal;
+  modal.appendChild(btnSalva); modal.appendChild(btnAnn);
+  document.getElementById('modalOverlay').className='modal-overlay open';
+}
+
+function aggiornaModificaTotale() {
+  var box = document.getElementById('modClienteTotBox');
+  if (!box || !modificaClienteData) return;
+  var p = modificaClienteData;
+  var dates = getDateRange(p.dataInizio||p.data, p.dataFine||p.data);
+  var fila = (p.posto||'A-1').split('-')[0];
+  var molFila = getMoltiplicatoreFila(fila);
+  var tot = 0;
+  dates.forEach(function(data) {
+    var molP=getMoltiplicatorePeriodo(data), molG=getMoltiplicatoreGiorno(data);
+    (config.attrezzature||[]).forEach(function(a){ var qty=modificaClienteQta[a.id]||0; if(qty>0) tot+=a.prezzoBase*qty*molFila*molP*molG; });
+  });
+  tot = Math.round(tot*100)/100;
+  box.innerHTML='';
+  var lbl=document.createElement('div'); lbl.className='totale-label'; lbl.textContent='Nuovo totale stimato';
+  var val=document.createElement('div'); val.className='totale-value'; val.textContent=formatEuro(tot);
+  box.appendChild(lbl); box.appendChild(val);
+}
+
+async function salvaModificaCliente() {
+  var p = modificaClienteData;
+  if (!p) return;
+  var btn = document.querySelector('#modalContent .btn-prenota');
+  if (btn) { btn.disabled=true; btn.textContent='Salvataggio...'; }
+  var attrScelte = [];
+  (config.attrezzature||[]).forEach(function(a){ if((modificaClienteQta[a.id]||0)>0) attrScelte.push({id:a.id,nome:a.nome,qty:modificaClienteQta[a.id]}); });
+  var dates = getDateRange(p.dataInizio||p.data, p.dataFine||p.data);
+  var fila = (p.posto||'A-1').split('-')[0];
+  var molFila = getMoltiplicatoreFila(fila);
+  var tot = 0;
+  dates.forEach(function(data){ var molP=getMoltiplicatorePeriodo(data),molG=getMoltiplicatoreGiorno(data); (config.attrezzature||[]).forEach(function(a){ var qty=modificaClienteQta[a.id]||0; if(qty>0) tot+=a.prezzoBase*qty*molFila*molP*molG; }); });
+  tot = Math.round(tot*100)/100;
+  try {
+    for (var i=0; i<dates.length; i++) {
+      await updateDoc(doc(db,'prenotazioni',dates[i]+'_'+p.posto), {attrezzature:attrScelte, totale:tot, modificataDaCliente:true});
+    }
+    chiudiModal();
+    showToast('✅ Prenotazione aggiornata');
+    loadMiePrenotazioni();
+  } catch(e) { showToast('Errore: riprova'); if(btn){btn.disabled=false;btn.textContent='Salva Modifiche';} }
+}
+
+function confermaAnnullaCliente(p) {
+  var modal = document.getElementById('modalContent');
+  modal.innerHTML='';
+  var icon=document.createElement('div'); icon.style.cssText='font-size:44px;text-align:center;margin-bottom:12px'; icon.textContent='🗑️';
+  var title=document.createElement('div'); title.className='modal-title'; title.style.textAlign='center'; title.textContent='Annulla prenotazione?';
+  var sub=document.createElement('div'); sub.className='modal-sub'; sub.style.textAlign='center';
+  sub.textContent='Ombrellone '+(p.posto||'').replace('-','')+' · '+(p.numGiorni||1)+' giorni. Questa azione non è reversibile.';
+  var btnSi=document.createElement('button'); btnSi.className='btn-prenota'; btnSi.style.background='var(--booked)'; btnSi.textContent='Sì, annulla prenotazione';
+  btnSi.onclick=function(){ doAnnullaCliente(p); };
+  var btnNo=document.createElement('button'); btnNo.className='btn-annulla'; btnNo.textContent='No, torna indietro';
+  btnNo.onclick=chiudiModal;
+  modal.appendChild(icon); modal.appendChild(title); modal.appendChild(sub); modal.appendChild(btnSi); modal.appendChild(btnNo);
+  document.getElementById('modalOverlay').className='modal-overlay open';
+}
+
+async function doAnnullaCliente(p) {
+  var btn = document.querySelector('#modalContent .btn-prenota');
+  if (btn) { btn.disabled=true; btn.textContent='Annullamento...'; }
+  var dates = getDateRange(p.dataInizio||p.data, p.dataFine||p.data);
+  try {
+    for (var i=0; i<dates.length; i++) {
+      await deleteDoc(doc(db,'prenotazioni',dates[i]+'_'+p.posto));
+    }
+    chiudiModal();
+    showToast('✅ Prenotazione annullata');
+    loadMiePrenotazioni();
+    loadPrenotazioniRange();
+  } catch(e) { showToast('Errore: riprova'); if(btn){btn.disabled=false;btn.textContent='Sì, annulla prenotazione';} }
 }
 
 // ===== BARCODE =====

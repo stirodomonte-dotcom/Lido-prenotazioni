@@ -193,6 +193,11 @@
   .empty-icon { font-size: 44px; margin-bottom: 10px; }
   .loading-inline { text-align: center; padding: 30px; color: var(--text-light); font-size: 14px; }
 
+  .cliente-card { background: white; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 4px solid var(--sea); }
+  .cliente-name { font-size: 15px; font-weight: 800; margin-bottom: 4px; }
+  .cliente-detail { font-size: 13px; color: var(--text-light); margin-bottom: 2px; }
+  .cliente-badge { display: inline-block; background: #E3F8EF; color: var(--green); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 20px; margin-top: 6px; }
+
   .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1A1A2E; color: white; padding: 12px 22px; border-radius: 24px; font-size: 14px; font-weight: 600; z-index: 999; transition: transform 0.3s ease; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.25); }
   .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
@@ -222,6 +227,23 @@
   <div class="tooltip-box" id="tooltipContent"></div>
 </div>
 
+<!-- SCREEN CLIENTI -->
+<div class="screen" id="screen-clienti">
+  <div class="cassa-header">
+    <div class="cassa-title">👥 Database Clienti</div>
+    <div class="cassa-sub">Tutti gli utenti registrati</div>
+  </div>
+  <div style="display:flex;gap:10px;margin-bottom:14px">
+    <input type="text" id="clientiSearch" placeholder="Cerca per nome, email, tel..." style="flex:1;padding:11px 14px;border:1.5px solid #D0DDE8;border-radius:10px;font-size:14px;outline:none;-webkit-appearance:none;background:white">
+    <button onclick="exportClientiCSV()" style="background:var(--green);color:white;border:none;padding:0 14px;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap">📥 CSV</button>
+  </div>
+  <div class="section-title">
+    <span id="clientiTitolo">Clienti registrati</span>
+    <span class="badge-count" id="clientiCount">0</span>
+  </div>
+  <div id="clientiLista"></div>
+</div>
+
 <!-- CONFIRM -->
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-box">
@@ -249,6 +271,7 @@
   <button class="tab" onclick="showTab('supervisore')">👁️ Vista</button>
   <button class="tab" onclick="showTab('statistiche')">📊 Stats</button>
   <button class="tab" onclick="showTab('config')">⚙️ Config</button>
+  <button class="tab" onclick="showTab('clienti')">👥 Clienti</button>
 </div>
 
 <!-- CASSA -->
